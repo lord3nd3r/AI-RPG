@@ -161,7 +161,9 @@ DM:`
     const jsonString = extractJson(aiResponseContent)
     if (jsonString) {
       try {
-        const parsed = JSON.parse(jsonString)
+        // Sanitize JSON: remove leading + from numbers (e.g. +10) which is invalid in standard JSON
+        const cleanedJson = jsonString.replace(/:\s*\+(\d+)/g, ': $1')
+        const parsed = JSON.parse(cleanedJson)
         const result = DMUpdateSchema.safeParse(parsed)
         if (result.success) {
           const updateData = result.data
