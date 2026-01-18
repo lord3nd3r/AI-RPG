@@ -48,16 +48,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { email } = await request.json()
+  const { email, userId } = await request.json()
 
-  if (!email || email === session.user.email) {
-    return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
+  if ((!email && !userId) || email === session.user.email || userId === session.user.id) {
+    return NextResponse.json({ error: 'Invalid user target' }, { status: 400 })
   }
 
   try {
-    const targetUser = await prisma.user.findUnique({
-      where: { email }
-    })
+    let targetUser;
+    
+    if (userId) {
+       targetUser = await prisma.user.findUnique({ where: { id: userId } })
+    } else {
+       targetUser = await prisma.user.findUnique({ where: { email } })
+    }
 
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

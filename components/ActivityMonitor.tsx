@@ -14,6 +14,14 @@ type ActivityStats = {
 
 export function ActivityMonitor() {
   const [stats, setStats] = useState<ActivityStats | null>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number; userId: string } | null>(null)
+
+  useEffect(() => {
+    // Close menu on click anywhere
+    const handleClick = () => setMenu(null)
+    window.addEventListener('click', handleClick)
+    return () => window.removeEventListener('click', handleClick)
+  }, [])
 
   useEffect(() => {
     // 1. Get or create Visitor ID
@@ -52,10 +60,49 @@ export function ActivityMonitor() {
     return () => clearInterval(interval)
   }, [])
 
+  const handleContextMenu = (e: React.MouseEvent, userId: string) => {
+    e.preventDefault()
+    setMenu({ x: e.clientX, y: e.clientY, userId })
+  }
+
+  const handleAddFriend = async (userId: string) => {
+    try {
+      const res = await fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+      if (res.ok) {
+        alert('Friend request sent!')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to send friend request')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('An error occurred')
+    }
+    setMenu(null)
+  }
+
   if (!stats) return null
 
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm relative">
+      {menu && (
+        <div 
+          className="fixed z-50 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 min-w-[120px]"
+          style={{ top: menu.y, left: menu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button 
+            onClick={() => handleAddFriend(menu.userId)}
+            className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+          >
+            Add Friend
+          </button>
+        </div>
+      )}
       <div className="flex flex-col space-y-1.5 p-6 pb-2">
         <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
           <span>🌐</span> Live Activity
@@ -77,7 +124,11 @@ export function ActivityMonitor() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {stats.onlineUsers.map(u => (
-                  <div key={u.id} className="flex items-center gap-1.5 bg-secondary/50 px-2 py-1 rounded text-xs">
+                  <div 
+                    key={u.id} 
+                    className="flex items-center gap-1.5 bg-secondary/50 px-2 py-1 rounded text-xs cursor-context-menu hover:bg-secondary transition-colors"
+                    onContextMenu={(e) => handleContextMenu(e, u.id)}
+                  >
                     <span>👤</span>
                     <span className="truncate max-w-[100px]" title={u.name}>{u.name}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
