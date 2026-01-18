@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface Character {
   id: string
@@ -30,8 +31,11 @@ export default function DashboardClient() {
   const [editCharOpen, setEditCharOpen] = useState(false)
   const [editingChar, setEditingChar] = useState<Character | null>(null)
 
+  const [confirmDeleteCharId, setConfirmDeleteCharId] = useState<string | null>(null)
+
   const [editGameOpen, setEditGameOpen] = useState(false)
   const [editingGame, setEditingGame] = useState<Game | null>(null)
+  const [confirmDeleteGameId, setConfirmDeleteGameId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -71,12 +75,14 @@ export default function DashboardClient() {
     }
   }
 
-  async function deleteChar(id: string) {
-    if (!confirm('Delete this character? This cannot be undone.')) return
+  async function confirmDeleteChar() {
+    const id = confirmDeleteCharId
+    if (!id) return
     try {
       const res = await fetch(`/api/characters/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed')
       setCharacters(prev => prev.filter(p => p.id !== id))
+      setConfirmDeleteCharId(null)
       setToast({ message: 'Character deleted', type: 'success' })
     } catch (err) {
       console.error(err)
@@ -102,12 +108,14 @@ export default function DashboardClient() {
     }
   }
 
-  async function deleteGame(id: string) {
-    if (!confirm('Delete this game? This cannot be undone.')) return
+  async function confirmDeleteGame() {
+    const id = confirmDeleteGameId
+    if (!id) return
     try {
       const res = await fetch(`/api/games/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed')
       setGames(prev => prev.filter(p => p.id !== id))
+      setConfirmDeleteGameId(null)
       setToast({ message: 'Game deleted', type: 'success' })
     } catch (err) {
       console.error(err)
@@ -133,7 +141,7 @@ export default function DashboardClient() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => { setEditingChar(c); setEditCharOpen(true) }} className="px-3 py-1 bg-accent text-accent-foreground rounded">Edit</button>
-                  <button onClick={() => deleteChar(c.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
+                  <button onClick={() => setConfirmDeleteCharId(c.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
                 </div>
               </div>
             ))}
@@ -156,7 +164,7 @@ export default function DashboardClient() {
                 <div className="flex gap-2">
                   <a href={`/games/${g.id}`} className="px-3 py-1 bg-secondary text-secondary-foreground rounded">Play</a>
                   <button onClick={() => { setEditingGame(g); setEditGameOpen(true) }} className="px-3 py-1 bg-accent text-accent-foreground rounded">Edit</button>
-                  <button onClick={() => deleteGame(g.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
+                  <button onClick={() => setConfirmDeleteGameId(g.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
                 </div>
               </div>
             ))}
@@ -205,6 +213,10 @@ export default function DashboardClient() {
           </form>
         )}
       </Modal>
+
+      <ConfirmModal open={!!confirmDeleteCharId} title="Delete Character" description="Delete this character? This cannot be undone." onConfirm={confirmDeleteChar} onCancel={() => setConfirmDeleteCharId(null)} />
+
+      <ConfirmModal open={!!confirmDeleteGameId} title="Delete Game" description="Delete this game? This cannot be undone." onConfirm={confirmDeleteGame} onCancel={() => setConfirmDeleteGameId(null)} />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>

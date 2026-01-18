@@ -99,15 +99,18 @@ export default function GameClient({ id }: { id: string }) {
   return (
     <div className="flex h-[calc(100vh-64px)] bg-background">
       <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full border-r border-muted">
-        <div className="p-4 border-b border-muted bg-card shadow-sm z-10">
-          <h1 className="text-xl font-bold text-foreground">{game.name}</h1>
-          <p className="text-sm text-muted-foreground line-clamp-1">{game.description}</p>
+        <div className="p-6 border-b border-muted bg-card shadow-sm z-10 rpg-banner flex items-center gap-4">
+          <img src="/icons/parchment.svg" className="w-40 h-16 object-cover rounded" alt="parchment" />
+          <div>
+            <h1 className="text-2xl font-extrabold text-foreground">{game.name}</h1>
+            <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{game.description}</p>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background/50">
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-lg px-4 py-3 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card text-card-foreground border border-muted rounded-bl-none'}`}>
+            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start fade-in'}`}>
+              <div className={`max-w-[80%] rounded-lg px-4 py-3 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card chat-assistant text-card-foreground border border-muted rounded-bl-none'}`}>
                 {msg.role === 'assistant' && <div className="text-xs font-bold text-primary mb-1 uppercase tracking-wider">Dungeon Master</div>}
                 <div className="whitespace-pre-wrap">{msg.content}</div>
                 <div className="text-[10px] opacity-70 mt-1 text-right">{new Date(msg.createdAt).toLocaleTimeString()}</div>
