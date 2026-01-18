@@ -175,8 +175,37 @@ DM:`
               dbUpdates.currentMp = { increment: update.mpChange }
             }
 
+            let newExp = targetChar.exp
             if (typeof update.xpChange === 'number') {
-              dbUpdates.exp = { increment: update.xpChange }
+              // Calculate new XP locally to check for level up
+              newExp = (targetChar.exp || 0) + update.xpChange
+              dbUpdates.exp = newExp
+            }
+            
+            // Leveling Formula: Level = floor(sqrt(XP / 100)) + 1
+            // 0 XP = Lvl 1
+            // 100 XP = Lvl 2
+            // 400 XP = Lvl 3
+            // 900 XP = Lvl 4
+            const calculateLevel = (xp: number) => Math.floor(Math.sqrt(Math.max(0, xp) / 100)) + 1
+            const newLevel = calculateLevel(newExp)
+            const currentLevel = targetChar.level || 1
+
+            if (newLevel > currentLevel) {
+              dbUpdates.level = newLevel
+              const levelsGained = newLevel - currentLevel
+              
+              // Stat bonuses
+              const hpBonus = 10 * levelsGained
+              const mpBonus = 5 * levelsGained
+              
+              if (typeof dbUpdates.maxHp === 'object') { (dbUpdates.maxHp as any).increment += hpBonus } else { dbUpdates.maxHp = { increment: hpBonus } }
+              if (typeof dbUpdates.currentHp === 'object') { (dbUpdates.currentHp as any).increment += hpBonus } else { dbUpdates.currentHp = { increment: hpBonus } }
+              
+              if (typeof dbUpdates.maxMp === 'object') { (dbUpdates.maxMp as any).increment += mpBonus } else { dbUpdates.maxMp = { increment: mpBonus } }
+              if (typeof dbUpdates.currentMp === 'object') { (dbUpdates.currentMp as any).increment += mpBonus } else { dbUpdates.currentMp = { increment: mpBonus } }
+
+              aiResponseContent += `\n\n✨ **LEVEL UP!** ${targetChar.character.name} has reached Level ${newLevel}! (+${hpBonus} HP, +${mpBonus} MP)`
             }
 
             if (update.statusEffect) {
