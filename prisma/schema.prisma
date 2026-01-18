@@ -1,138 +1,124 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  // url      = env("DATABASE_URL")
   url      = "file:./dev.db"
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  characters Character[]
-  games     Game[]
-  
-  sentFriendships     Friendship[] @relation("SentFriendships")
-  receivedFriendships Friendship[] @relation("ReceivedFriendships")
-
-  conversations Conversation[] @relation("UserConversations")
-  sentMessages  DirectMessage[] @relation("UserSentMessages")
-
-  createdAt DateTime @default(now())
-  lastSeen  DateTime @default(now())
-  
-  role      String   @default("user") // "user", "admin"
-  banned    Boolean  @default(false)
+  id                  String          @id @default(cuid())
+  email               String          @unique
+  password            String
+  name                String?
+  createdAt           DateTime        @default(now())
+  lastSeen            DateTime        @default(now())
+  role                String          @default("user")
+  banned              Boolean         @default(false)
+  characters          Character[]
+  sentMessages        DirectMessage[] @relation("UserSentMessages")
+  receivedFriendships Friendship[]    @relation("ReceivedFriendships")
+  sentFriendships     Friendship[]    @relation("SentFriendships")
+  games               Game[]
+  conversations       Conversation[]  @relation("UserConversations")
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  updatedAt DateTime @updatedAt
-  
-  participants User[] @relation("UserConversations")
+  id           String          @id @default(cuid())
+  updatedAt    DateTime        @updatedAt
   messages     DirectMessage[]
+  participants User[]          @relation("UserConversations")
 }
 
 model DirectMessage {
   id             String       @id @default(cuid())
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
   senderId       String
-  sender         User         @relation("UserSentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  
   content        String
   createdAt      DateTime     @default(now())
   read           Boolean      @default(false)
+  sender         User         @relation("UserSentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
   @@index([senderId])
 }
 
 model Visitor {
-  id        String   @id
-  lastSeen  DateTime @default(now())
+  id       String   @id
+  lastSeen DateTime @default(now())
 }
 
 model Friendship {
-  id        String   @id @default(cuid())
-  senderId  String
+  id         String   @id @default(cuid())
+  senderId   String
   receiverId String
-  status    String   @default("pending") // "pending", "accepted"
-  
-  sender    User     @relation("SentFriendships", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver  User     @relation("ReceivedFriendships", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  receiver   User     @relation("ReceivedFriendships", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User     @relation("SentFriendships", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
   @@index([receiverId])
   @@index([senderId])
 }
 
-
 model Character {
-  id        String   @id @default(cuid())
-  name      String
-  class     String   @default("Warrior")
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stats     String  // Store stats as JSON string, e.g., '{"strength": 10, "intelligence": 8, ...}'
-  games     GameCharacter[]
-  partyMessages PartyMessage[]
+  id            String          @id @default(cuid())
+  name          String
+  class         String          @default("Warrior")
+  userId        String
+  stats         String
+  createdAt     DateTime        @default(now())
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  games         GameCharacter[]
   messages      Message[]
-  createdAt DateTime @default(now())
+  partyMessages PartyMessage[]
 }
 
 model Game {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  dmUserId    String
-  dmUser      User     @relation(fields: [dmUserId], references: [id])
-  aiProvider  String   // e.g., "grok", "chatgpt", "ollama"
-  isPublic    Boolean  @default(false)
-  maxPlayers  Int      @default(4)
-  status      String   @default("active") // active, full, completed
-  characters  GameCharacter[]
-  messages    Message[]
+  id            String          @id @default(cuid())
+  name          String
+  description   String?
+  dmUserId      String
+  aiProvider    String
+  isPublic      Boolean         @default(false)
+  maxPlayers    Int             @default(4)
+  status        String          @default("active")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
+  dmUser        User            @relation(fields: [dmUserId], references: [id])
+  characters    GameCharacter[]
+  messages      Message[]
   partyMessages PartyMessage[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  gameId    String
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  characterId String? // Optional, helps AI know who spoke
+  id          String     @id @default(cuid())
+  gameId      String
+  characterId String?
+  role        String
+  content     String
+  createdAt   DateTime   @default(now())
   character   Character? @relation(fields: [characterId], references: [id])
-  role      String   // 'user', 'assistant', 'system'
-  content   String
-  createdAt DateTime @default(now())
+  game        Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 model GameCharacter {
-  gameId      String
-  characterId String
-  currentHp   Int      @default(10)
-  maxHp       Int      @default(10)
-  currentMp   Int      @default(10)
-  maxMp       Int      @default(10)
-  exp         Int      @default(0)
-  level       Int      @default(1)
-  statusEffects String @default("[]") // JSON array of strings
-  inventory   String   @default("[]") // JSON list of items
-  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  gameId             String
+  characterId        String
+  currentHp          Int                 @default(10)
+  maxHp              Int                 @default(10)
+  currentMp          Int                 @default(10)
+  maxMp              Int                 @default(10)
+  exp                Int                 @default(0)
+  level              Int                 @default(1)
+  statusEffects      String              @default("[]")
+  inventory          String              @default("[]")
+  character          Character           @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  game               Game                @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameInventoryItems GameInventoryItem[]
 
   @@id([gameId, characterId])
@@ -144,40 +130,34 @@ model PartyMessage {
   characterId String
   content     String
   createdAt   DateTime  @default(now())
-
-  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([gameId])
   @@index([createdAt])
 }
 
-
-// Items and per-game-character inventory
 model Item {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  rarity      String?
-  meta        String?  // JSON-encoded meta for effects, e.g. '{"hpRestore":10}'
-  createdAt   DateTime @default(now())
-
+  id              String              @id @default(cuid())
+  name            String
+  description     String?
+  rarity          String?
+  meta            String?
+  createdAt       DateTime            @default(now())
   gameInventories GameInventoryItem[]
 }
 
 model GameInventoryItem {
-  id          String   @id @default(cuid())
-  gameId      String
-  characterId String
-  itemId      String
-  quantity    Int      @default(1)
-  equipped    Boolean  @default(false)
-  slot        String?
-  createdAt   DateTime @default(now())
-
-  // Relations
-  gameCharacter GameCharacter @relation(fields: [gameId, characterId], references: [gameId, characterId], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  gameId        String
+  characterId   String
+  itemId        String
+  quantity      Int           @default(1)
+  equipped      Boolean       @default(false)
+  slot          String?
+  createdAt     DateTime      @default(now())
   item          Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  gameCharacter GameCharacter @relation(fields: [gameId, characterId], references: [gameId, characterId], onDelete: Cascade)
 
   @@index([gameId])
   @@index([characterId])
