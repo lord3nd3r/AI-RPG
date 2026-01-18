@@ -15,8 +15,8 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/' })
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/', redirect: true })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -155,6 +155,7 @@ export default function AccountPage() {
                 <div className="mt-8 pt-8 border-t border-border">
                     <h3 className="text-lg font-semibold text-foreground mb-4">Account Actions</h3>
                     <button
+                        type="button"
                         onClick={handleSignOut}
                         className="flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
                     >
