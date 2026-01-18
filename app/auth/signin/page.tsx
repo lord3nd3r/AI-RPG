@@ -18,7 +18,9 @@ export default function SignIn() {
       redirect: false,
     })
     if (result?.ok) {
-      router.push('/dashboard')
+      // Use window.location.href to force a full page load and ensure 
+      // the session cookie is properly recognized by the server.
+      window.location.href = '/dashboard'
     } else {
       alert('Invalid credentials')
     }
