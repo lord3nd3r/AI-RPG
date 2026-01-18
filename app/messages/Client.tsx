@@ -72,8 +72,7 @@ export default function MessengerClient({ userId }: { userId: string }) {
           const res = await fetch('/api/friends')
           if (res.ok) {
               const data = await res.json()
-              // API returns array of friends with { id, name, email } structure compatible
-              setFriends(data)
+              setFriends(data.friends || [])
           }
       } catch (e) { console.error(e) }
   }
