@@ -31,6 +31,7 @@ interface GameResponse {
   description?: string
   aiProvider: string
   messages: Message[]
+  partyMessages?: PartyMessage[]
   characters: Array<{
     character: Character
     currentHp?: number
@@ -118,25 +119,56 @@ export default function GameClient({ id }: { id: string }) {
     } catch (e) { console.error('Chat fetch error', e) }
   }, [id])
 
-  useEffect(() => {
-    fetchGameData()
-    fetchChat()
-    fetchMyCharacter()
-    const interval = setInterval(() => {
-        fetchGameData()
-        fetchChat()
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [fetchGameData, fetchChat])
-
-  async function fetchMyCharacter() {
+  const fetchMyCharacter = useCallback(async () => {
     try {
       const res = await fetch(`/api/games/${id}/characters`)
       if (!res.ok) return
       const data = await res.json()
       if (data && data.characterId) setMyCharacterId(data.characterId)
-    } catch (e) { console.error('Failed to fetch my character', e) }
-  }
+    } catch { 
+      // ignore
+    }
+  }, [id])
+
+  useEffect(() => {
+    fetchGameData()
+    fetchChat()
+    fetchMyCharacter()
+
+    const eventSource = new EventSource(`/api/games/${id}/stream`)
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data: GameResponse = JSON.parse(event.data)
+        setGame(data)
+        setMessages(data.messages || [])
+        setCharacters((data.characters || []).map((c) => ({
+          ...c.character,
+          currentHp: c.currentHp,
+          maxHp: c.maxHp,
+          currentMp: c.currentMp,
+          maxMp: c.maxMp,
+          level: c.level,
+          exp: c.exp,
+          statusEffects: c.statusEffects
+        })))
+        if (data.partyMessages) {
+          setPartyMessages(data.partyMessages)
+        }
+      } catch {
+        // Ignore heartbeat/ping parse errors
+      }
+    }
+
+    eventSource.onerror = () => {
+      console.log('SSE connection lost, retrying...')
+      // eventSource auto-reconnects
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [id, fetchGameData, fetchChat, fetchMyCharacter])
 
   useEffect(() => {
     if (shouldAutoScroll.current) {

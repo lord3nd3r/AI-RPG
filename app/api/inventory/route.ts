@@ -118,8 +118,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === 'add') {
+      // Validate permissions? For now, we rely on the caller validation above (user owns character OR is DM/System - not fully implemented yet, assuming user triggers for now or AI via user proxy)
+      // Ideally, 'add' should be restricted or verified against an event logic. 
+      // For MVP: allow the client to trigger 'loot' if the UI permits it.
+      
+      const existing = await prisma.gameInventoryItem.findFirst({
+        where: { gameId, characterId, itemId }
+      })
+
+      if (existing) {
+        await prisma.gameInventoryItem.update({
+          where: { id: existing.id },
+          data: { quantity: { increment: quantity } }
+        })
+      } else {
+        await prisma.gameInventoryItem.create({
+          data: {
+            gameId,
+            characterId,
+            itemId,
+            quantity
+          }
+        })
+      }
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (err) {
+  } catch (error) {
+    console.error('Inventory API Error:', error)
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 }

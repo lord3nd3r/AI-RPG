@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { signOut } from 'next-auth/react'
-import { ArrowLeft, User, Mail, Lock, Save, CheckCircle, AlertCircle, LogOut } from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
+import { ArrowLeft, User, Mail, Lock, Save, CheckCircle, AlertCircle, LogOut, Shield } from 'lucide-react'
 
 export default function AccountPage() {
+  const { data: session } = useSession()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -53,9 +54,17 @@ export default function AccountPage() {
                 <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                 Back to Dashboard
             </Link>
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-                Account Settings
-            </h1>
+            <div className="flex items-center gap-4">
+                {session?.user?.role === 'admin' && (
+                    <Link href="/admin/users" className="flex items-center gap-2 px-3 py-1 bg-purple-900/50 hover:bg-purple-900/70 text-purple-200 rounded-full text-xs font-medium border border-purple-800 transition-colors">
+                        <Shield className="w-3 h-3" />
+                        Admin
+                    </Link>
+                )}
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+                    Account Settings
+                </h1>
+            </div>
         </div>
 
         <div className="bg-card border border-border rounded-xl shadow-xl overflow-hidden">

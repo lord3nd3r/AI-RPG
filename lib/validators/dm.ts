@@ -9,6 +9,12 @@ export const DMUpdateSchema = z.object({
     statusEffect: z.string().optional(),
     action: z.enum(['add', 'remove']).optional(),
   })),
+  loot: z.array(z.object({
+    characterName: z.string(),
+    itemName: z.string(),
+    quantity: z.number().optional().default(1),
+    description: z.string().optional()
+  })).optional()
 })
 
 export type DMUpdate = z.infer<typeof DMUpdateSchema>

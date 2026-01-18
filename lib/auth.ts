@@ -10,8 +10,12 @@ export interface AuthSession {
     name?: string | null
     email?: string | null
     image?: string | null
+    role: string
+    banned: boolean
   }
 }
+
+const ROOT_EMAIL = process.env.ROOT_ADMIN_EMAIL
 
 export const authOptions = {
   providers: [
@@ -34,6 +38,12 @@ export const authOptions = {
           return null
         }
 
+        const isRoot = ROOT_EMAIL && user.email === ROOT_EMAIL
+
+        if (user.banned && !isRoot) {
+           throw new Error('User is banned')
+        }
+
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
         if (!isPasswordValid) {
@@ -44,6 +54,8 @@ export const authOptions = {
           id: user.id,
           email: user.email,
           name: user.name || undefined,
+          role: isRoot ? 'admin' : user.role,
+          banned: isRoot ? false : user.banned
         }
       }
     })
@@ -55,12 +67,16 @@ export const authOptions = {
     async jwt({ token, user }: { token: any, user: any }) {
       if (user) {
         token.id = user.id
+        token.role = user.role
+        token.banned = user.banned
       }
       return token
     },
     async session({ session, token }: { session: any, token: any }) {
       if (token && session.user) {
         session.user.id = token.id
+        session.user.role = token.role
+        session.user.banned = token.banned
       }
       return session
     }

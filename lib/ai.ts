@@ -112,6 +112,7 @@ async function callOpenAI(messages: Message[], maxTokens: number): Promise<strin
 
 async function callOllama(messages: Message[], maxTokens: number): Promise<string> {
   const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+  const model = process.env.OLLAMA_MODEL || 'llama3';
   
   // Ollama chat endpoint
   const response = await fetch(`${baseUrl}/api/chat`, {
@@ -120,7 +121,7 @@ async function callOllama(messages: Message[], maxTokens: number): Promise<strin
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama3', // Default to llama3, user might need to pull it
+      model,
       messages,
       stream: false,
       options: {

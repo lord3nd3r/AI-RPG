@@ -99,17 +99,23 @@ CRITICAL RULE: Do NOT ask the player to roll dice. Instead, YOU must simulate th
 - Determine success or failure immediately.
 - Narrate the consequence.
 
-IMPORTANT: You have the power to update character stats.
-If a character takes damage, heals, uses mana, gains xp, or gets a status effect, you MUST include a JSON block at the end of your response like this:
+IMPORTANT: You have the power to update character stats and grant loot.
+If a character takes damage, heals, uses mana, gains xp, gets a status effect, or LOOTS an item, you MUST include a JSON block at the end of your response.
+
+Example Format:
 \`\`\`json
 {
   "updates": [
     { "characterName": "Sorian", "hpChange": -5, "mpChange": -2, "xpChange": 50 }, 
     { "characterName": "Sorian", "statusEffect": "Poisoned", "action": "add" }
+  ],
+  "loot": [
+    { "characterName": "Sorian", "itemName": "Rusty Dagger", "quantity": 1, "description": "An old dagger." }
   ]
 }
 \`\`\`
 Valid actions for statusEffects are "add" or "remove".
+For loot, provide the item name. If it's a new unique item, feel free to add a description.
 Keep your narration engaging but concise.
 `
 
@@ -232,6 +238,58 @@ DM:`
                 },
                 data: dbUpdates,
               })
+            }
+          }
+
+          // Handle Loot
+          if (updateData.loot && updateData.loot.length > 0) {
+            for (const drop of updateData.loot) {
+              const targetChar = game.characters.find(c => c.character.name === drop.characterName)
+              if (!targetChar) continue
+
+              // Find or create item
+              // Note: Ideally we fuzzily match existing items, but for now we look for exact name match
+              // If not found, we create a new Item.
+              let item = await prisma.item.findFirst({ where: { name: drop.itemName } })
+              
+              if (!item) {
+                item = await prisma.item.create({
+                  data: {
+                    name: drop.itemName,
+                    description: drop.description || 'Created by DM AI',
+                    rarity: 'Common' // Default
+                  }
+                })
+              }
+
+              // Add to inventory (Atomic Upsert Logic)
+              const existingInv = await prisma.gameInventoryItem.findFirst({
+                where: {
+                  gameId: id,
+                  characterId: targetChar.characterId,
+                  itemId: item.id
+                }
+              })
+
+              const qty = drop.quantity ?? 1
+
+              if (existingInv) {
+                await prisma.gameInventoryItem.update({
+                  where: { id: existingInv.id },
+                  data: { quantity: { increment: qty } }
+                })
+              } else {
+                await prisma.gameInventoryItem.create({
+                  data: {
+                    gameId: id,
+                    characterId: targetChar.characterId,
+                    itemId: item.id,
+                    quantity: qty
+                  }
+                })
+              }
+
+              aiResponseContent += `\n\n🎁 **LOOT!** ${targetChar.character.name} received: ${qty}x ${item.name}`
             }
           }
         } else {

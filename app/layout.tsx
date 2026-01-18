@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI RPG Game",
   description: "Multiplayer RPG with AI DM",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
