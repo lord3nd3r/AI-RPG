@@ -3,6 +3,13 @@ import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateAIResponseWithRetries } from '@/lib/ai'
 import { DMUpdateSchema } from '@/lib/validators/dm' 
+import { Game, Message, GameCharacter, Character, Prisma } from '@prisma/client'
+
+// Define the shape of the game including relations
+type GameWithContext = Game & {
+  messages: (Message & { character: Character | null })[]
+  characters: (GameCharacter & { character: Character })[]
+} 
 
 export async function POST(
   request: NextRequest,
@@ -13,7 +20,8 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id } = await Promise.resolve(params)
+  const resolvedParams = await params
+  const { id } = resolvedParams
   const { message } = await request.json()
 
   // 1. Identify character
@@ -26,17 +34,22 @@ export async function POST(
   })
 
   // 2. Save user message with character info
+  // Force type to avoid TS errors
+  const messageData: any = {
+    gameId: id,
+    role: 'user',
+    content: message,
+  }
+  if (gameChar?.characterId) {
+    messageData.characterId = gameChar.characterId
+  }
+
   await prisma.message.create({
-    data: {
-      gameId: id,
-      role: 'user',
-      content: message,
-      characterId: gameChar?.characterId, // Track who said it
-    },
+    data: messageData,
   })
 
   // 3. Fetch game context (messages & characters)
-  const game = await prisma.game.findUnique({
+  const gameRaw = await prisma.game.findUnique({
     where: { id },
     include: {
       messages: { 
@@ -47,6 +60,8 @@ export async function POST(
       characters: { include: { character: true } },
     },
   })
+
+  const game = gameRaw as unknown as GameWithContext | null
 
   if (!game) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
@@ -71,7 +86,12 @@ export async function POST(
 Your players are:
 ${charactersContext}
 
-Your goal is to narrate the adventure, ask for skill checks, and manage combat.
+Your goal is to narrate the adventure and manage combat.
+CRITICAL RULE: Do NOT ask the player to roll dice. Instead, YOU must simulate the roll yourself based on their stats and the difficulty.
+- Narrate the roll result (e.g. "You rolled a 15 + 3 = 18").
+- Determine success or failure immediately.
+- Narrate the consequence.
+
 IMPORTANT: You have the power to update character stats.
 If a character takes damage, heals, uses mana, gains xp, or gets a status effect, you MUST include a JSON block at the end of your response like this:
 \`\`\`json
