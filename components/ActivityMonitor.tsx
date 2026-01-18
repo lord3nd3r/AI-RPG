@@ -19,8 +19,13 @@ export function ActivityMonitor() {
     // 1. Get or create Visitor ID
     let visitorId = localStorage.getItem('ai_rpg_visitor_id')
     if (!visitorId) {
-      visitorId = crypto.randomUUID()
-      localStorage.setItem('ai_rpg_visitor_id', visitorId)
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        visitorId = crypto.randomUUID();
+      } else {
+        // Simple fallback/polyfill for insecure contexts or older browsers
+        visitorId = 'v-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      }
+      localStorage.setItem('ai_rpg_visitor_id', visitorId!)
     }
 
     const fetchActivity = async () => {
