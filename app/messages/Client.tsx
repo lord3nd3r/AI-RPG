@@ -2,8 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Send, MoreVertical, Phone, Video, Search, User as UserIcon } from 'lucide-react'
+import { Send, MoreVertical, Phone, Video, Search, User as UserIcon, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+interface Friend {
+  id: string
+  name: string | null
+  email: string | null
+}
 
 interface Participant {
   id: string
@@ -42,6 +48,8 @@ export default function MessengerClient({ userId }: { userId: string }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [loadingMessages, setLoadingMessages] = useState(false)
+  const [showNewChat, setShowNewChat] = useState(false)
+  const [friends, setFriends] = useState<Friend[]>([])
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -56,6 +64,41 @@ export default function MessengerClient({ userId }: { userId: string }) {
     } catch (error) {
       console.error('Failed to fetch conversations', error)
     }
+  }
+
+  const openNewChat = async () => {
+      setShowNewChat(true)
+      try {
+          const res = await fetch('/api/friends')
+          if (res.ok) {
+              const data = await res.json()
+              // API returns array of friends with { id, name, email } structure compatible
+              setFriends(data)
+          }
+      } catch (e) { console.error(e) }
+  }
+  
+  const startChat = async (friendId: string) => {
+      setShowNewChat(false)
+      const existing = conversations.find(c => c.participants.some(p => p.id === friendId))
+      if (existing) {
+          setActiveConversationId(existing.id)
+      } else {
+        try {
+            const res = await fetch('/api/conversations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ targetUserId: friendId })
+            })
+            if (res.ok) {
+              const { id } = await res.json()
+              setActiveConversationId(id)
+              fetchConversations()
+            }
+        } catch (e) {
+          console.error(e)
+        }
+      }
   }
 
   // 2. Initial Load & Auto-create if targetUserId present
@@ -176,13 +219,19 @@ export default function MessengerClient({ userId }: { userId: string }) {
     <div className="flex h-full bg-slate-950 text-slate-100">
       {/* Sidebar */}
       <div className="w-80 border-r border-slate-800 flex flex-col bg-slate-900/50">
-        <div className="p-4 border-b border-slate-800">
+        <div className="p-4 border-b border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+              <h2 className="font-bold text-lg text-slate-100">Messages</h2>
+              <button onClick={openNewChat} className="p-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white transition-colors shadow-lg shadow-indigo-500/20" title="New Message">
+                  <Plus className="w-4 h-4" />
+              </button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <input 
               type="text" 
-              placeholder="Search conversations..." 
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200"
+              placeholder="Search..." 
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200 placeholder:text-slate-600"
             />
           </div>
         </div>
@@ -322,6 +371,44 @@ export default function MessengerClient({ userId }: { userId: string }) {
           </div>
         )}
       </div>
+
+      {/* New Chat Modal */}
+      {showNewChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh]">
+                <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+                    <h3 className="font-bold text-lg text-white">New Message</h3>
+                    <button onClick={() => setShowNewChat(false)} className="p-1 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <div className="p-4 overflow-y-auto flex-1 space-y-2">
+                    {friends.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500">
+                            <p>No friends found.</p>
+                            <p className="text-sm mt-1">Add friends from the lobby or search to start chatting!</p>
+                        </div>
+                    ) : (
+                        friends.map(friend => (
+                            <button 
+                                key={friend.id}
+                                onClick={() => startChat(friend.id)}
+                                className="w-full flex items-center gap-3 p-3 hover:bg-slate-800 rounded-xl transition-colors text-left group"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 font-bold border border-indigo-500/30 group-hover:bg-indigo-500/30 group-hover:border-indigo-500/50 transition-all">
+                                    {friend.name?.[0] || friend.email?.[0] || '?'}
+                                </div>
+                                <div>
+                                    <h4 className="font-medium text-slate-200 group-hover:text-white transition-colors">{friend.name || friend.email}</h4>
+                                    <p className="text-xs text-slate-500">{friend.email}</p>
+                                </div>
+                            </button>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   )
 }
