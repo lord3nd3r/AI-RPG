@@ -21,6 +21,7 @@ Users can create unique characters, join public lobbies with other players, and 
 - **Real-Time State Management**: The AI automatically updates player stats (HP, Inventory, Status Effects) based on the narrative.
 - **Party System**: Multiplayer support allows groups of players to join the same game session and adventure together.
 - **Friends List**: Add allies by email, manage pending requests, and keep track of your companions.
+- **Direct Messaging**: Chat privately with friends in real-time.
 - **Party Chat**: Real-time Out-Of-Character (OOC) chat for strategizing with your party or asking the DM questions directly.
 
 ### 🛠 Core Systems

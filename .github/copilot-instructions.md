@@ -7,7 +7,7 @@
 	<!-- Project scaffolded using npx create-next-app@latest . --ts --tailwind --eslint --app -->
 
 - [x] Customize the Project
-	<!-- Project customized: Added authentication with NextAuth, Prisma database with User, Character, Game models. Added RPG mechanics: Stats, HP, Status Effects tracking, and AI-driven game state updates. Expanded to MMORPG style with Public Lobbies, Multiplayer joining, and Friends List system. -->
+	<!-- Project customized: Added authentication with NextAuth, Prisma database with User, Character, Game models. Added RPG mechanics: Stats, HP, Status Effects tracking, and AI-driven game state updates. Expanded to MMORPG style with Public Lobbies, Multiplayer joining, Friends List system, and Real-time Messaging. -->
 
 - [x] Install Required Extensions
 	<!-- No extensions needed. -->
