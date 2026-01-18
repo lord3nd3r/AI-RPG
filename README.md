@@ -20,18 +20,20 @@ Users can create unique characters, join public lobbies with other players, and 
 - **Natural Language Input**: Do anything you can describe. "I swing my sword at the goblin," "I try to persuade the guard," or "I cast a fireball."
 - **Real-Time State Management**: The AI automatically updates player stats (HP, Inventory, Status Effects) based on the narrative.
 - **Party System**: Multiplayer support allows groups of players to join the same game session and adventure together.
+- **Friends List**: Add allies by email, manage pending requests, and keep track of your companions.
+- **Party Chat**: Real-time Out-Of-Character (OOC) chat for strategizing with your party or asking the DM questions directly.
 
 ### 🛠 Core Systems
 - **Character Creation**: Choose from various classes (Warrior, Mage, Rogue, Cleric) with generated stats.
 - **Public Lobbies**: Browse and join active games from the new **Multiplayer Lobby**.
-- **Dashboard**: Central hub to manage your characters and active campaigns.
+- **Dashboard**: Central hub to manage your characters, friends, and active campaigns.
 - **Theming System**: Integrated theme switcher with presets including *Default*, *Cyberpunk*, *Fantasy*, and *Dark*.
 
 ### 🏗 Technical Highlights
 - **Optimistic UI**: Chat interface updates instantly while the AI processes the turn.
 - **Polling Sync**: Automatic game state synchronization ensures all party members see the same messages and health bars.
 - **Secure Auth**: Full user authentication system using NextAuth.js.
-- **Robust Database**: Relational data modeling with Prisma (SQLite for dev) for Users, Games, Characters, and Message History.
+- **Robust Database**: Relational data modeling with Prisma (SQLite for dev) for Users, Games, Characters, Messages, and Friendships.
 
 ## 🚀 Tech Stack
 
@@ -94,6 +96,11 @@ Users can create unique characters, join public lobbies with other players, and 
    ```
 
    Visit [http://localhost:3000](http://localhost:3000) to enter the realm.
+
+   > **Pro Tip**: To test Multiplayer with friends on the same network:
+   > 1. Find your local IP (e.g., `192.168.1.X`).
+   > 2. Have friends visit `http://YOUR_LOCAL_IP:3000`.
+   > 3. Note: Without HTTPS, the "Invite Link" button may use a fallback prompt instead of the clipboard.
 
 ## 🎲 Implementation Details
 
