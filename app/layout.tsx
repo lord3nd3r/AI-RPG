@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,11 +22,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions) as any;
+
   return (
     <html lang="en" className="dark">
       <body
@@ -49,6 +53,11 @@ export default function RootLayout({
                 <Link href="/account" className="text-sm font-medium text-slate-400 hover:text-indigo-400 transition-colors">
                   Account
                 </Link>
+                {session?.user?.role === 'admin' && (
+                  <Link href="/admin/users" className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors border border-purple-500/30 px-3 py-1 rounded-full bg-purple-500/10">
+                    Admin
+                  </Link>
+                )}
               </div>
             </div>
           </header>

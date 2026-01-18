@@ -70,6 +70,10 @@ export const authOptions = {
         token.role = user.role
         token.banned = user.banned
       }
+      // Force admin role if user matches ROOT_ADMIN_EMAIL
+      if (process.env.ROOT_ADMIN_EMAIL && token.email === process.env.ROOT_ADMIN_EMAIL) {
+        token.role = 'admin'
+      }
       return token
     },
     async session({ session, token }: { session: any, token: any }) {
