@@ -42,6 +42,12 @@ export default function RootLayout({
                 <Link href="/dashboard" className="text-sm font-medium text-slate-400 hover:text-indigo-400 transition-colors">
                   Dashboard
                 </Link>
+                <Link href="/messages" className="text-sm font-medium text-slate-400 hover:text-indigo-400 transition-colors">
+                  Messages
+                </Link>
+                <Link href="/account" className="text-sm font-medium text-slate-400 hover:text-indigo-400 transition-colors">
+                  Account
+                </Link>
               </div>
             </div>
           </header>
