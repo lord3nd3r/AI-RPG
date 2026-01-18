@@ -129,6 +129,7 @@ model GameCharacter {
   inventory   String   @default("[]") // JSON list of items
   game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  gameInventoryItems GameInventoryItem[]
 
   @@id([gameId, characterId])
 }
@@ -145,4 +146,35 @@ model PartyMessage {
 
   @@index([gameId])
   @@index([createdAt])
+}
+
+
+// Items and per-game-character inventory
+model Item {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  rarity      String?
+  createdAt   DateTime @default(now())
+
+  gameInventories GameInventoryItem[]
+}
+
+model GameInventoryItem {
+  id          String   @id @default(cuid())
+  gameId      String
+  characterId String
+  itemId      String
+  quantity    Int      @default(1)
+  equipped    Boolean  @default(false)
+  slot        String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  gameCharacter GameCharacter @relation(fields: [gameId, characterId], references: [gameId, characterId], onDelete: Cascade)
+  item          Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@index([characterId])
+  @@index([itemId])
 }
