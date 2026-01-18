@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'use') {
       // Apply item effects if defined in Item.meta, then reduce quantity
-      const inv = await prisma.gameInventoryItem.findFirst({ where: { gameId, characterId, itemId }, include: { item: true } })
+      const inv = await prisma.gameInventoryItem.findFirst({ where: { gameId, characterId, itemId }, include: { item: true, gameCharacter: true } })
       if (!inv) return NextResponse.json({ error: 'Item not found' }, { status: 404 })
 
       // Parse meta if present
