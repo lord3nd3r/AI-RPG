@@ -51,3 +51,23 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession()
+  if (!session || !session.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id } = await params
+
+  // Return the gameCharacter entry for the current user in this game (if any)
+  const gameChar = await prisma.gameCharacter.findFirst({
+    where: { gameId: id, character: { userId: session.user.id } },
+    include: { character: true }
+  })
+
+  if (!gameChar) return NextResponse.json({ message: 'Not in game' }, { status: 200 })
+
+  return NextResponse.json(gameChar)
+}

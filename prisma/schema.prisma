@@ -155,6 +155,7 @@ model Item {
   name        String
   description String?
   rarity      String?
+  meta        String?  // JSON-encoded meta for effects, e.g. '{"hpRestore":10}'
   createdAt   DateTime @default(now())
 
   gameInventories GameInventoryItem[]

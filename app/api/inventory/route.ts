@@ -45,9 +45,49 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'use') {
-      // For now, reduce quantity and return result. Real effects handled elsewhere.
-      const inv = await prisma.gameInventoryItem.findFirst({ where: { gameId, characterId, itemId } })
+      // Apply item effects if defined in Item.meta, then reduce quantity
+      const inv = await prisma.gameInventoryItem.findFirst({ where: { gameId, characterId, itemId }, include: { item: true } })
       if (!inv) return NextResponse.json({ error: 'Item not found' }, { status: 404 })
+
+      // Parse meta if present
+      try {
+        if (inv.item?.meta) {
+          const meta = JSON.parse(inv.item.meta)
+          const updates: any = {}
+          if (typeof meta.hpRestore === 'number') {
+            updates.currentHp = { increment: Math.max(0, Math.floor(meta.hpRestore)) }
+          }
+          if (typeof meta.mpRestore === 'number') {
+            updates.currentMp = { increment: Math.max(0, Math.floor(meta.mpRestore)) }
+          }
+          if (typeof meta.statusEffect === 'string') {
+            // add status effect
+            const existing = JSON.parse(inv.gameCharacter?.statusEffects || '[]')
+            if (!existing.includes(meta.statusEffect)) existing.push(meta.statusEffect)
+            updates.statusEffects = JSON.stringify(existing)
+          }
+
+          if (Object.keys(updates).length > 0) {
+            // Clamp HP/MP to max values after applying increments
+            await prisma.gameCharacter.update({
+              where: { gameId_characterId: { gameId, characterId } },
+              data: updates as any,
+            })
+            // Ensure HP/MP do not exceed max
+            const current = await prisma.gameCharacter.findUnique({ where: { gameId_characterId: { gameId, characterId } } })
+            const clampUpdates: any = {}
+            if (current) {
+              if (current.currentHp > current.maxHp) clampUpdates.currentHp = current.maxHp
+              if (current.currentMp > current.maxMp) clampUpdates.currentMp = current.maxMp
+            }
+            if (Object.keys(clampUpdates).length > 0) {
+              await prisma.gameCharacter.update({ where: { gameId_characterId: { gameId, characterId } }, data: clampUpdates })
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to apply item meta', e)
+      }
 
       if (inv.quantity <= quantity) {
         await prisma.gameInventoryItem.delete({ where: { id: inv.id } })

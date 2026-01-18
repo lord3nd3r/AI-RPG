@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
+import InventoryButton from '@/components/InventoryButton'
 
 interface Message {
   id: string
@@ -58,6 +59,7 @@ export default function GameClient({ id }: { id: string }) {
   const [chatInput, setChatInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [characters, setCharacters] = useState<Character[]>([])
+  const [myCharacterId, setMyCharacterId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -119,12 +121,22 @@ export default function GameClient({ id }: { id: string }) {
   useEffect(() => {
     fetchGameData()
     fetchChat()
+    fetchMyCharacter()
     const interval = setInterval(() => {
         fetchGameData()
         fetchChat()
     }, 2000)
     return () => clearInterval(interval)
   }, [fetchGameData, fetchChat])
+
+  async function fetchMyCharacter() {
+    try {
+      const res = await fetch(`/api/games/${id}/characters`)
+      if (!res.ok) return
+      const data = await res.json()
+      if (data && data.characterId) setMyCharacterId(data.characterId)
+    } catch (e) { console.error('Failed to fetch my character', e) }
+  }
 
   useEffect(() => {
     if (shouldAutoScroll.current) {
@@ -298,6 +310,11 @@ export default function GameClient({ id }: { id: string }) {
                         </div>
                         <div className="text-right">
                          <div className="text-[10px] text-slate-400 font-mono">XP: {char.exp ?? 0}</div>
+                         {myCharacterId === char.id && (
+                           <div className="mt-2">
+                             <InventoryButton gameId={id} characterId={char.id} />
+                           </div>
+                         )}
                         </div>
                     </div>
 
