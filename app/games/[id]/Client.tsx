@@ -60,6 +60,15 @@ export default function GameClient({ id }: { id: string }) {
   const [characters, setCharacters] = useState<Character[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const shouldAutoScroll = useRef(true)
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 100
+    shouldAutoScroll.current = isAtBottom
+  }
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -118,7 +127,9 @@ export default function GameClient({ id }: { id: string }) {
   }, [fetchGameData, fetchChat])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (shouldAutoScroll.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages])
 
   useEffect(() => {
@@ -209,7 +220,11 @@ export default function GameClient({ id }: { id: string }) {
         </div>
 
         {/* Chat Scrolling Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-950 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-950 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
+        >
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start fade-in'}`}>
               <div className={`
