@@ -23,6 +23,12 @@ model User {
   receivedFriendships Friendship[] @relation("ReceivedFriendships")
 
   createdAt DateTime @default(now())
+  lastSeen  DateTime @default(now())
+}
+
+model Visitor {
+  id        String   @id
+  lastSeen  DateTime @default(now())
 }
 
 model Friendship {

@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth'
 import Link from 'next/link'
 import DashboardClient from './Client' 
 import FriendsList from '@/components/FriendsList'
+import { ActivityMonitor } from '@/components/ActivityMonitor'
 
 export default async function Dashboard() {
   const session = await getSession()
@@ -35,7 +36,8 @@ export default async function Dashboard() {
           <div className="xl:col-span-3">
             <DashboardClient />
           </div>
-          <div className="xl:col-span-1">
+          <div className="xl:col-span-1 space-y-6">
+            <ActivityMonitor />
             <FriendsList />
           </div>
         </div>
