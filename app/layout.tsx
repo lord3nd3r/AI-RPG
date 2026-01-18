@@ -32,7 +32,7 @@ export default function RootLayout({
         <Providers>
           <header className="border-b border-indigo-500/10 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-              <Link href="/" className="text-xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+              <Link href="/dashboard" className="text-xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
                 AETHER
               </Link>
               <div className="flex items-center gap-6">
