@@ -67,7 +67,7 @@ async function callGrok(messages: Message[], maxTokens: number): Promise<string>
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'grok-3', // Updated to latest model
+      model: 'grok-4-fast-reasoning', // Updated to latest model
       messages,
       max_tokens: maxTokens,
     }),
