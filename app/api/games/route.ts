@@ -28,6 +28,27 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Create an initial DM message so the game isn't empty
+    try {
+      const introSystem = `You are the Dungeon Master for a brand new party. Provide a short engaging opening scene for a fantasy RPG that introduces tone, setting, and a first choice for the players. Keep it concise but evocative.`
+      const intro = await (await import('@/lib/ai')).generateAIResponse({
+        provider: game.aiProvider as any,
+        prompt: 'Start the adventure with a short opening scene and an immediate hook for the players.',
+        systemPrompt: introSystem,
+        maxTokens: 400,
+      })
+
+      await prisma.message.create({
+        data: {
+          gameId: game.id,
+          role: 'assistant',
+          content: intro,
+        },
+      })
+    } catch (err) {
+      console.warn('Failed to generate initial DM message', err)
+    }
+
     return NextResponse.json(game)
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
