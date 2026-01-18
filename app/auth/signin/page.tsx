@@ -74,7 +74,7 @@ export default function SignIn() {
           </div>
           <div className="text-center">
             <a href="/auth/signup" className="text-primary hover:brightness-110">
-              Don't have an account? Sign up
+              Don&apos;t have an account? Sign up
             </a>
           </div>
         </form>

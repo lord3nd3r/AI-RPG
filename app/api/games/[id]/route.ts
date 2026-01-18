@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session) {
+  const session = await getSession()
+  if (!session || !session.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Await params since it's now a promise in newer Next.js versions (though in route handlers usually direct for now)
   // To be safe with Next 16 type definitions:
   const { id } = await Promise.resolve(params)
+
+  console.debug('[GET /api/games/[id]] id=', id, 'user=', session.user?.id)
 
   let game = await prisma.game.findUnique({
     where: { id },
@@ -31,6 +32,7 @@ export async function GET(
   })
 
   if (!game) {
+    console.warn('[GET /api/games/[id]] game not found', id)
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
   }
 
@@ -40,13 +42,13 @@ export async function GET(
       const introSystem = `You are the Dungeon Master for a brand new party. Provide a short engaging opening scene for a fantasy RPG that introduces tone, setting, and a first choice for the players. Keep it concise but evocative.`
       const { generateAIResponse } = await import('@/lib/ai')
       const intro = await generateAIResponse({
-        provider: game.aiProvider as any,
+        provider: game.aiProvider as import('@/lib/ai').AIProvider,
         prompt: 'Start the adventure with a short opening scene and an immediate hook for the players.',
         systemPrompt: introSystem,
         maxTokens: 400,
       })
 
-      const msg = await prisma.message.create({
+      await prisma.message.create({
         data: { gameId: id, role: 'assistant', content: intro },
       })
 
@@ -68,9 +70,9 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await Promise.resolve(params)
@@ -101,9 +103,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await Promise.resolve(params)

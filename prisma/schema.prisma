@@ -7,7 +7,8 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  // url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -17,8 +18,30 @@ model User {
   name      String?
   characters Character[]
   games     Game[]
+  
+  sentFriendships     Friendship[] @relation("SentFriendships")
+  receivedFriendships Friendship[] @relation("ReceivedFriendships")
+
   createdAt DateTime @default(now())
 }
+
+model Friendship {
+  id        String   @id @default(cuid())
+  senderId  String
+  receiverId String
+  status    String   @default("pending") // "pending", "accepted"
+  
+  sender    User     @relation("SentFriendships", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver  User     @relation("ReceivedFriendships", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+  @@index([senderId])
+}
+
 
 model Character {
   id        String   @id @default(cuid())
@@ -28,6 +51,8 @@ model Character {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stats     String  // Store stats as JSON string, e.g., '{"strength": 10, "intelligence": 8, ...}'
   games     GameCharacter[]
+  partyMessages PartyMessage[]
+  messages      Message[]
   createdAt DateTime @default(now())
 }
 
@@ -43,6 +68,7 @@ model Game {
   status      String   @default("active") // active, full, completed
   characters  GameCharacter[]
   messages    Message[]
+  partyMessages PartyMessage[]
   createdAt   DateTime @default(now())
 }
 
@@ -50,6 +76,8 @@ model Message {
   id        String   @id @default(cuid())
   gameId    String
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  characterId String? // Optional, helps AI know who spoke
+  character   Character? @relation(fields: [characterId], references: [id])
   role      String   // 'user', 'assistant', 'system'
   content   String
   createdAt DateTime @default(now())
@@ -68,4 +96,18 @@ model GameCharacter {
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@id([gameId, characterId])
+}
+
+model PartyMessage {
+  id          String    @id @default(cuid())
+  gameId      String
+  characterId String
+  content     String
+  createdAt   DateTime  @default(now())
+
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@index([createdAt])
 }

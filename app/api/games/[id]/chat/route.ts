@@ -1,35 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { generateAIResponse } from '@/lib/ai'
+import { generateAIResponseWithRetries } from '@/lib/ai'
+import { DMUpdateSchema } from '@/lib/validators/dm' 
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session) {
+  const session = await getSession()
+  if (!session || !session.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { id } = await Promise.resolve(params)
   const { message } = await request.json()
 
-  // 1. Save user message
+  // 1. Identify character
+  const gameChar = await prisma.gameCharacter.findFirst({
+    where: {
+      gameId: id,
+      character: { userId: session.user.id }
+    },
+    include: { character: true }
+  })
+
+  // 2. Save user message with character info
   await prisma.message.create({
     data: {
       gameId: id,
       role: 'user',
       content: message,
+      characterId: gameChar?.characterId, // Track who said it
     },
   })
 
-  // 2. Fetch game context (messages & characters)
+  // 3. Fetch game context (messages & characters)
   const game = await prisma.game.findUnique({
     where: { id },
     include: {
-      messages: { orderBy: { createdAt: 'asc' }, take: 20 }, // Context window
+      messages: { 
+        orderBy: { createdAt: 'asc' }, 
+        take: 20,
+        include: { character: true } 
+      }, 
       characters: { include: { character: true } },
     },
   })
@@ -38,7 +52,7 @@ export async function POST(
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
   }
 
-  // 3. Construct prompt
+  // 4. Construct prompt
   const charactersContext = game.characters.map(gc => `
     Name: ${gc.character.name} (${gc.character.class})
     HP: ${gc.currentHp}/${gc.maxHp}
@@ -46,7 +60,11 @@ export async function POST(
     Condition: ${JSON.stringify(gc.statusEffects)}
   `).join('\n')
 
-  const previousMessages = game.messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')
+  const previousMessages = game.messages.map(m => {
+    if (m.role === 'assistant') return `DM: ${m.content}`;
+    if (m.character) return `${m.character.name}: ${m.content}`;
+    return `Player: ${m.content}`;
+  }).join('\n')
   
   const systemPrompt = `You are the Dungeon Master for a fantasy RPG. 
 Your players are:
@@ -70,61 +88,96 @@ Keep your narration engaging but concise.
   const prompt = `Current Story:
 ${previousMessages}
 
-USER: ${message}
+${gameChar?.character.name || 'Player'}: ${message}
 
 DM:`
 
-  // 4. Generate AI response
+  // 4. Generate AI response with retries and validated updates
   try {
-    let aiResponseContent = await generateAIResponse({
-      provider: game.aiProvider as any,
-      prompt: prompt,
-      systemPrompt: systemPrompt,
-    })
+    let aiResponseContent: string
 
-    // 5. Detect and apply updates
-    // We look for the JSON block
-    const jsonMatch = aiResponseContent.match(/```json\s*([\s\S]*?)\s*```/)
-    if (jsonMatch) {
-      try {
-        const updateData = JSON.parse(jsonMatch[1])
-        if (updateData.updates) {
-          for (const update of updateData.updates) {
-            // Find character
-            const targetChar = game.characters.find(c => c.character.name === update.characterName)
-            if (targetChar) {
-              const updates: any = {}
-              if (update.hpChange) {
-                updates.currentHp = { increment: update.hpChange }
-              }
-              if (update.statusEffect) {
-                const currentEffects = JSON.parse(targetChar.statusEffects as string || '[]')
-                if (update.action === 'add' && !currentEffects.includes(update.statusEffect)) {
-                  updates.statusEffects = JSON.stringify([...currentEffects, update.statusEffect])
-                } else if (update.action === 'remove') {
-                  updates.statusEffects = JSON.stringify(currentEffects.filter((e: string) => e !== update.statusEffect))
-                }
-              }
+    try {
+      aiResponseContent = await generateAIResponseWithRetries({
+        provider: game.aiProvider as import('@/lib/ai').AIProvider,
+        prompt: prompt,
+        systemPrompt: systemPrompt,
+      }, 3, 500)
+    } catch (err) {
+      console.error('AI generation retries failed:', err)
+      const failMsg = 'The Dungeon Master is unavailable right now. Please try again shortly.'
+      const savedFail = await prisma.message.create({ data: { gameId: id, role: 'assistant', content: failMsg } })
+      return NextResponse.json({ message: savedFail })
+    }
 
-              if (Object.keys(updates).length > 0) {
-                 await prisma.gameCharacter.update({
-                   where: {
-                     gameId_characterId: {
-                       gameId: id,
-                       characterId: targetChar.characterId
-                     }
-                   },
-                   data: updates
-                 })
-              }
-            }
+    // Helper to try to extract JSON from the DM's text
+    function extractJson(text: string): string | null {
+      const codeBlock = text.match(/```json\s*([\s\S]*?)\s*```/)
+      if (codeBlock) return codeBlock[1]
+
+      // Fallback: attempt to find a JSON object by matching braces (simple heuristic)
+      const firstBrace = text.indexOf('{')
+      if (firstBrace === -1) return null
+      let depth = 0
+      for (let i = firstBrace; i < text.length; i++) {
+        if (text[i] === '{') depth++
+        else if (text[i] === '}') {
+          depth--
+          if (depth === 0) {
+            return text.slice(firstBrace, i + 1)
           }
         }
-        // Clean up the response to hide the JSON from the user? 
-        // Or keep it for debug? Let's hide it for immersion.
+      }
+      return null
+    }
+
+    const jsonString = extractJson(aiResponseContent)
+    if (jsonString) {
+      try {
+        const parsed = JSON.parse(jsonString)
+        const result = DMUpdateSchema.safeParse(parsed)
+        if (result.success) {
+          const updateData = result.data
+          for (const update of updateData.updates) {
+            const targetChar = game.characters.find(c => c.character.name === update.characterName)
+            if (!targetChar) continue
+
+            const dbUpdates: Record<string, unknown> = {}
+            if (typeof update.hpChange === 'number') {
+              dbUpdates.currentHp = { increment: update.hpChange }
+            }
+
+            if (update.statusEffect) {
+              const currentEffects = JSON.parse(targetChar.statusEffects as string || '[]')
+              if (update.action === 'add' && !currentEffects.includes(update.statusEffect)) {
+                dbUpdates.statusEffects = JSON.stringify([...currentEffects, update.statusEffect])
+              } else if (update.action === 'remove') {
+                dbUpdates.statusEffects = JSON.stringify(currentEffects.filter((e: string) => e !== update.statusEffect))
+              }
+            }
+
+            if (Object.keys(dbUpdates).length > 0) {
+              await prisma.gameCharacter.update({
+                where: {
+                  gameId_characterId: {
+                    gameId: id,
+                    characterId: targetChar.characterId,
+                  },
+                },
+                data: dbUpdates,
+              })
+            }
+          }
+        } else {
+          console.warn('DM updates failed validation', result.error)
+          aiResponseContent = aiResponseContent + '\n\n[System: The DM sent updates that failed validation. No updates applied.]'
+        }
+
+        // Remove the JSON block from the visible message for immersion
         aiResponseContent = aiResponseContent.replace(/```json\s*[\s\S]*?\s*```/, '').trim()
       } catch (e) {
-        console.error('Failed to parse DM updates', e)
+        console.error('Failed to parse DM updates', e, '\nRaw DM output:', aiResponseContent)
+        // Notify players (and devs) that the DM's update couldn't be parsed
+        aiResponseContent = aiResponseContent + '\n\n[System: The DM attempted to send structured updates but they could not be parsed. No updates were applied.]'
       }
     }
 

@@ -132,19 +132,30 @@ export default function DashboardClient() {
             <button onClick={() => window.location.href = '/characters/create'} className="bg-primary text-primary-foreground px-4 py-2 rounded">Create</button>
           </div>
 
-          <div className="space-y-4">
-            {loading ? <div>Loading...</div> : characters.map((c) => (
-              <div key={c.id} className="bg-card p-4 rounded-lg shadow flex justify-between items-center border border-muted">
-                <div>
-                  <h3 className="font-bold text-lg">{c.name}</h3>
-                  <div className="text-sm text-muted-foreground">{c.class}</div>
+          <div className={`${loading ? 'flex' : 'grid grid-cols-1 lg:grid-cols-2'} gap-4`}>
+            {loading ? <div className="text-muted-foreground italic p-4">Summoning characters...</div> : characters.map((c) => (
+              <div key={c.id} className="bg-card p-6 rounded-xl shadow-md flex flex-col justify-between border border-muted hover:border-primary/50 transition-all group">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-xl group-hover:text-primary transition-colors">{c.name}</h3>
+                    <div className="text-sm font-mono text-muted-foreground bg-muted px-2 py-1 rounded mt-1 inline-block">{c.class}</div>
+                  </div>
+                  <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-2xl">
+                    👤
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => { setEditingChar(c); setEditCharOpen(true) }} className="px-3 py-1 bg-accent text-accent-foreground rounded">Edit</button>
-                  <button onClick={() => setConfirmDeleteCharId(c.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
+                <div className="flex gap-2 mt-auto pt-4 border-t border-muted/50 justify-end">
+                  <button onClick={() => { setEditingChar(c); setEditCharOpen(true) }} className="px-3 py-1.5 text-sm bg-accent text-accent-foreground rounded-md hover:brightness-90 transition">Edit</button>
+                  <button onClick={() => setConfirmDeleteCharId(c.id)} className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-red-700 transition text-white">Delete</button>
                 </div>
               </div>
             ))}
+            {!loading && characters.length === 0 && (
+              <div className="col-span-full text-center py-10 border-2 border-dashed border-muted rounded-xl">
+                <p className="text-muted-foreground mb-4">No heroes found.</p>
+                <button onClick={() => window.location.href = '/characters/create'} className="text-primary hover:underline">Create your first character</button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -154,20 +165,33 @@ export default function DashboardClient() {
             <button onClick={() => window.location.href = '/games/create'} className="bg-primary text-primary-foreground px-4 py-2 rounded">Create</button>
           </div>
 
-          <div className="space-y-4">
-            {loading ? <div>Loading...</div> : games.map((g) => (
-              <div key={g.id} className="bg-card p-4 rounded-lg shadow flex justify-between items-center border border-muted">
-                <div>
-                  <h3 className="font-bold text-lg">{g.name}</h3>
-                  <div className="text-sm text-muted-foreground">{g.description}</div>
+          <div className={`${loading ? 'flex' : 'grid grid-cols-1 lg:grid-cols-2'} gap-4`}>
+            {loading ? <div className="text-muted-foreground italic p-4">Discovering realms...</div> : games.map((g) => (
+              <div key={g.id} className="bg-card p-6 rounded-xl shadow-md flex flex-col justify-between border border-muted hover:border-primary/50 transition-all group">
+                <div className="mb-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-xl group-hover:text-primary transition-colors line-clamp-1" title={g.name}>{g.name}</h3>
+                    {g.isPublic && <span className="text-[10px] uppercase font-bold bg-green-500/10 text-green-500 px-2 py-0.5 rounded border border-green-500/20">Public</span>}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-2 line-clamp-2 min-h-[2.5em]">{g.description || "A mysterious land awaiting exploration..."}</div>
                 </div>
-                <div className="flex gap-2">
-                  <a href={`/games/${g.id}`} className="px-3 py-1 bg-secondary text-secondary-foreground rounded">Play</a>
-                  <button onClick={() => { setEditingGame(g); setEditGameOpen(true) }} className="px-3 py-1 bg-accent text-accent-foreground rounded">Edit</button>
-                  <button onClick={() => setConfirmDeleteGameId(g.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
+                
+                <div className="flex gap-2 mt-auto pt-4 border-t border-muted/50 justify-between items-center">
+                  <span className="text-xs text-muted-foreground font-mono">👥 {g.maxPlayers || 4} Max</span>
+                  <div className="flex gap-2">
+                    <a href={`/games/${g.id}`} className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-md font-medium hover:brightness-110 shadow-sm transition">Play</a>
+                    <button onClick={() => { setEditingGame(g); setEditGameOpen(true) }} className="px-3 py-1.5 text-sm bg-accent text-accent-foreground rounded-md hover:brightness-90 transition">Edit</button>
+                    <button onClick={() => setConfirmDeleteGameId(g.id)} className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-red-700 transition text-white">Delete</button>
+                  </div>
                 </div>
               </div>
             ))}
+             {!loading && games.length === 0 && (
+              <div className="col-span-full text-center py-10 border-2 border-dashed border-muted rounded-xl">
+                <p className="text-muted-foreground mb-4">No realms created.</p>
+                <button onClick={() => window.location.href = '/games/create'} className="text-primary hover:underline">Create a new game</button>
+              </div>
+            )}
           </div>
         </div>
       </div>

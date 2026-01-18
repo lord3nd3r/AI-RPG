@@ -108,6 +108,23 @@ The core game loop resides in `app/api/games/[id]/chat/route.ts`:
    - Server saves the narrative text to the database.
 5. **Update**: Clients poll for new messages and stat changes.
 
+### DM Validation & Tests ✅
+To make the game loop more robust, DM-structured JSON is now validated before being applied to the database:
+
+- A zod schema lives at `lib/validators/dm.ts` (`DMUpdateSchema`) and verifies the `updates` array structure.
+- There's a lightweight test script to exercise the parser and validator at `scripts/test-dm-parse.ts`.
+- Run it locally with:
+
+```bash
+npm run test:dm
+# (uses `npx tsx scripts/test-dm-parse.ts` under the hood)
+```
+
+This helps catch malformed DM output early and prevents accidental DB mutations when the AI response cannot be parsed.
+
+### AI Retry & Fallback 🚨
+AI provider calls now use a retry wrapper with exponential backoff (`generateAIResponseWithRetries` in `lib/ai.ts`). If the AI provider repeatedly fails, the server saves a friendly fallback assistant message ("The Dungeon Master is unavailable right now...") instead of erroring out. This improves resilience to temporary API outages.
+
 ### Folder Structure
 ```
 ├── app/

@@ -36,6 +36,23 @@ export async function generateAIResponse({
   }
 }
 
+export async function generateAIResponseWithRetries(
+  opts: AIRequest,
+  retries = 3,
+  backoffMs = 500
+): Promise<string> {
+  let attempt = 0
+  while (true) {
+    try {
+      return await generateAIResponse(opts)
+    } catch (err) {
+      attempt++
+      if (attempt >= retries) throw err
+      await new Promise((r) => setTimeout(r, backoffMs * Math.pow(2, attempt - 1)))
+    }
+  }
+}
+
 async function callGrok(messages: Message[], maxTokens: number): Promise<string> {
   const apiKey = process.env.GROK_API_KEY;
   if (!apiKey || apiKey === 'your-grok-key-here') {

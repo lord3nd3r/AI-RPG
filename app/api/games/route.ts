@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateAIResponseWithRetries } from '@/lib/ai'
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
   if (!session || !session.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -31,12 +31,12 @@ export async function POST(request: NextRequest) {
     // Create an initial DM message so the game isn't empty
     try {
       const introSystem = `You are the Dungeon Master for a brand new party. Provide a short engaging opening scene for a fantasy RPG that introduces tone, setting, and a first choice for the players. Keep it concise but evocative.`
-      const intro = await (await import('@/lib/ai')).generateAIResponse({
-        provider: game.aiProvider as any,
+      const intro = await generateAIResponseWithRetries({
+        provider: game.aiProvider as import('@/lib/ai').AIProvider,
         prompt: 'Start the adventure with a short opening scene and an immediate hook for the players.',
         systemPrompt: introSystem,
         maxTokens: 400,
-      })
+      }, 3, 500)
 
       await prisma.message.create({
         data: {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
   if (!session || !session.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

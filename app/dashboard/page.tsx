@@ -1,13 +1,13 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { getSession } from '@/lib/auth'
 import Link from 'next/link'
-import DashboardClient from './Client'
+import DashboardClient from './Client' 
+import FriendsList from '@/components/FriendsList'
 
 export default async function Dashboard() {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
-  if (!session) {
+  if (!session || !session.user?.id) {
+    // ...
     return <div>Please sign in</div>
   }
 
@@ -23,9 +23,13 @@ export default async function Dashboard() {
            </Link>
         </div>
 
-        <div className="mb-8">
-          {/* Client-managed dashboard */}
-          <DashboardClient />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <DashboardClient />
+          </div>
+          <div>
+            <FriendsList />
+          </div>
         </div>
       </div>
     </div>

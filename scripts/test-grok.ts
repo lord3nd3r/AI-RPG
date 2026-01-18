@@ -25,9 +25,10 @@ async function testGrok() {
     console.log(response);
     console.log('---------------------\n');
     console.log('✅ Grok API test passed successfully!');
-  } catch (error: any) {
+  } catch (error) {
     console.error('\n❌ Grok API test failed:');
-    console.error(error.message);
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(message);
   }
 }
 

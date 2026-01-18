@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 
 interface ModalProps {
   title?: string
@@ -18,7 +19,9 @@ export default function Modal({ title, open, onClose, children }: ModalProps) {
       <div className="relative bg-card rounded-lg shadow-2xl max-w-xl w-full p-6 z-10 border border-muted">
         {title && (
           <div className="flex items-center gap-3 mb-4">
-            <img src="/icons/gothic-sigil.svg" alt="icon" className="w-6 h-6" />
+            <div className="w-6 h-6 relative">
+              <Image src="/icons/gothic-sigil.svg" alt="icon" fill sizes="24px" style={{ objectFit: 'contain' }} />
+            </div>
             <h3 className="text-lg font-bold">{title}</h3>
           </div>
         )}
@@ -26,4 +29,4 @@ export default function Modal({ title, open, onClose, children }: ModalProps) {
       </div>
     </div>
   )
-}
+} 

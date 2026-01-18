@@ -7,6 +7,7 @@ export async function GET() {
     return NextResponse.json({ count })
   } catch (error) {
     console.error('DB test error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const message = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
