@@ -18,6 +18,7 @@ export function ThemeSwitcher() {
         <option value="dark">Dark</option>
         <option value="cyberpunk">Cyberpunk</option>
         <option value="fantasy">Fantasy</option>
+        <option value="gothic">Gothic</option>
       </select>
     </div>
   )

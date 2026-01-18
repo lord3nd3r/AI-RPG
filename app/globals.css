@@ -70,6 +70,31 @@
   font-family: 'Georgia', serif;
 }
 
+/* Gothic Theme */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=UnifrakturCook:ital@0;1&display=swap');
+
+[data-theme='gothic'] {
+  --background: #070607; /* near-black */
+  --foreground: #efe6e6; /* pale parchment text on black */
+  --primary: #7b0d0d; /* blood red */
+  --primary-foreground: #efe6e6;
+  --secondary: #2b2130; /* dark plum */
+  --secondary-foreground: #f3e6ee;
+  --card: #0f0e10; /* slightly lighter black */
+  --card-foreground: #efe6e6;
+  --muted: #1a181a;
+  --muted-foreground: #9b8f96;
+  font-family: 'UnifrakturCook', 'Cinzel', Georgia, serif;
+}
+
+/* Gothic accents */
+[data-theme='gothic'] .rpg-banner img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)) hue-rotate(-10deg) saturate(.6); }
+[data-theme='gothic'] .chat-assistant { background: linear-gradient(180deg, #121012, #0b0a0b); border: 1px solid rgba(120,40,40,0.25); color: var(--foreground); font-family: 'Cinzel', serif; }
+[data-theme='gothic'] .bg-card.chat-assistant { background: linear-gradient(180deg, #151315, #0b0a0b); border: 1px solid rgba(120,40,40,0.35); }
+[data-theme='gothic'] .rpg-banner h1 { color: var(--primary); text-shadow: 0 3px 0 rgba(0,0,0,0.6), 0 8px 30px rgba(123,13,13,0.15); }
+[data-theme='gothic'] .game-frame { border-image-source: linear-gradient(90deg, rgba(80,10,10,0.9), rgba(30,10,20,0.6)); }
+
+
 body {
   background-color: var(--background);
   color: var(--foreground);

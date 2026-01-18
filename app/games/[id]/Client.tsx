@@ -1,6 +1,42 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import Image from 'next/image'
+
+interface Message {
+  id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  createdAt: string
+}
+
+interface Character {
+  id: string
+  name: string
+  class: string
+  stats: string
+  currentHp?: number
+  maxHp?: number
+  level?: number
+  exp?: number
+  statusEffects?: string
+}
+
+interface GameResponse {
+  id: string
+  name: string
+  description?: string
+  aiProvider: string
+  messages: Message[]
+  characters: Array<{
+    character: Character
+    currentHp?: number
+    maxHp?: number
+    level?: number
+    exp?: number
+    statusEffects?: string
+  }>
+}
 
 interface Message {
   id: string
@@ -31,13 +67,7 @@ export default function GameClient({ id }: { id: string }) {
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchGameData()
-    const interval = setInterval(fetchGameData, 3000)
-    return () => clearInterval(interval)
-  }, [id])
-
-  async function fetchGameData() {
+  const fetchGameData = useCallback(async () => {
     try {
       const res = await fetch(`/api/games/${id}`, { credentials: 'same-origin' })
       if (res.status === 401) {
@@ -50,16 +80,22 @@ export default function GameClient({ id }: { id: string }) {
       }
       if (!res.ok) throw new Error('Failed to fetch')
 
-      const data = await res.json()
+      const data: GameResponse = await res.json()
       setGame(data)
       setMessages(data.messages || [])
-      setCharacters((data.characters || []).map((c: any) => ({ ...c.character, ...c })))
+      setCharacters((data.characters || []).map((c) => ({ ...c.character, currentHp: c.currentHp, maxHp: c.maxHp, level: c.level, exp: c.exp, statusEffects: c.statusEffects })))
       setErrorMessage(null)
     } catch (err) {
       console.error(err)
       setErrorMessage('Failed to load game data')
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchGameData()
+    const interval = setInterval(fetchGameData, 3000)
+    return () => clearInterval(interval)
+  }, [fetchGameData])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -87,7 +123,7 @@ export default function GameClient({ id }: { id: string }) {
       await fetchGameData()
     } catch (err) {
       console.error(err)
-      alert('Failed to send message')
+      setErrorMessage('Failed to send message')
     } finally {
       setLoading(false)
     }
@@ -100,7 +136,9 @@ export default function GameClient({ id }: { id: string }) {
     <div className="flex h-[calc(100vh-64px)] bg-background">
       <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full border-r border-muted">
         <div className="p-6 border-b border-muted bg-card shadow-sm z-10 rpg-banner flex items-center gap-4">
-          <img src="/icons/parchment.svg" className="w-40 h-16 object-cover rounded" alt="parchment" />
+          <div className="w-40 h-16 relative">
+            <Image src="/icons/parchment.svg" alt="parchment" fill sizes="160px" style={{ objectFit: 'cover', borderRadius: 8 }} />
+          </div>
           <div>
             <h1 className="text-2xl font-extrabold text-foreground">{game.name}</h1>
             <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{game.description}</p>
