@@ -34,8 +34,12 @@ export async function POST(
   })
 
   // 2. Save user message with character info
-  // Force type to avoid TS errors
-  const messageData: any = {
+  const messageData: {
+      gameId: string
+      role: 'user' | 'assistant' | 'system'
+      content: string
+      characterId?: string
+  } = {
     gameId: id,
     role: 'user',
     content: message,

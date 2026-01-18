@@ -12,7 +12,10 @@ type ActivityStats = {
   visitorCount: number
 }
 
+import { useRouter } from 'next/navigation'
+
 export function ActivityMonitor() {
+  const router = useRouter()
   const [stats, setStats] = useState<ActivityStats | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; userId: string } | null>(null)
 
@@ -85,6 +88,10 @@ export function ActivityMonitor() {
     setMenu(null)
   }
 
+  const handleSendMessage = (userId: string) => {
+    router.push(`/messages?userId=${userId}`)
+  }
+
   if (!stats) return null
 
   return (
@@ -95,6 +102,12 @@ export function ActivityMonitor() {
           style={{ top: menu.y, left: menu.x }}
           onClick={(e) => e.stopPropagation()}
         >
+          <button 
+            onClick={() => handleSendMessage(menu.userId)}
+            className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+          >
+            Send Message
+          </button>
           <button 
             onClick={() => handleAddFriend(menu.userId)}
             className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"

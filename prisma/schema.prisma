@@ -22,8 +22,35 @@ model User {
   sentFriendships     Friendship[] @relation("SentFriendships")
   receivedFriendships Friendship[] @relation("ReceivedFriendships")
 
+  conversations Conversation[] @relation("UserConversations")
+  sentMessages  DirectMessage[] @relation("UserSentMessages")
+
   createdAt DateTime @default(now())
   lastSeen  DateTime @default(now())
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  updatedAt DateTime @updatedAt
+  
+  participants User[] @relation("UserConversations")
+  messages     DirectMessage[]
+}
+
+model DirectMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId       String
+  sender         User         @relation("UserSentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  content        String
+  createdAt      DateTime     @default(now())
+  read           Boolean      @default(false)
+
+  @@index([conversationId])
+  @@index([senderId])
 }
 
 model Visitor {

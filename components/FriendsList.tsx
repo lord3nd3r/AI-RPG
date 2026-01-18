@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface Friend {
   id: string
@@ -10,6 +11,7 @@ interface Friend {
 }
 
 export default function FriendsList() {
+  const router = useRouter()
   const [friends, setFriends] = useState<Friend[]>([])
   const [sent, setSent] = useState<Friend[]>([])
   const [received, setReceived] = useState<Friend[]>([])
@@ -83,6 +85,10 @@ export default function FriendsList() {
     } catch (err) {
       console.error(err)
     }
+  }
+
+  const handleMessage = (friendId: string) => {
+    router.push(`/messages?userId=${friendId}`)
   }
 
   if (loading) return <div className="text-slate-400">Loading allies...</div>
@@ -233,13 +239,22 @@ export default function FriendsList() {
                       <span className="text-slate-500 text-xs group-hover:text-slate-400">{friend.email}</span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleAction(friend.friendshipId, 'delete')}
-                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-2 hover:bg-red-500/10 rounded-lg transform translate-x-2 group-hover:translate-x-0"
-                    title="Remove Friend"
-                  >
-                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                  </button>
+                  <div className="flex items-center">
+                    <button 
+                        onClick={() => handleMessage(friend.id)}
+                        className="text-slate-600 hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition-all p-2 hover:bg-indigo-500/10 rounded-lg transform translate-x-2 group-hover:translate-x-0 mr-1"
+                        title="Send Message"
+                    >
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </button>
+                    <button 
+                        onClick={() => handleAction(friend.friendshipId, 'delete')}
+                        className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-2 hover:bg-red-500/10 rounded-lg transform translate-x-2 group-hover:translate-x-0"
+                        title="Remove Friend"
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

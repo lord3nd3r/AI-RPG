@@ -19,7 +19,7 @@ export default async function Dashboard() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-extrabold text-foreground tracking-tight underline decoration-primary decoration-4 underline-offset-4">Dashboard</h1>
           <div className="hidden sm:block text-sm text-muted-foreground italic">
-            "Your legend begins here..."
+            &quot;Your legend begins here...&quot;
           </div>
         </div>
         

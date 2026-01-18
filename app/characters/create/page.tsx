@@ -46,7 +46,7 @@ export default function CreateCharacter() {
                 👤
             </div>
             <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">Forge Your Hero</h1>
-            <p className="text-slate-400 mt-2">Define your avatar's destiny in the realms.</p>
+            <p className="text-slate-400 mt-2">Define your avatar&apos;s destiny in the realms.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

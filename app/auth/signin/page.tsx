@@ -85,7 +85,7 @@ export default function SignIn() {
             
             <div className="text-center pt-4">
               <Link href="/auth/signup" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-                Don't have an account? Forge one here
+                Don&apos;t have an account? Forge one here
               </Link>
             </div>
           </form>
