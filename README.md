@@ -44,60 +44,110 @@ Users can create unique characters, join public lobbies with other players, and 
 - **Authentication**: [NextAuth.js](https://next-auth.js.org/)
 - **AI Integration**: Custom implementation supporting OpenAI-compatible APIs (xAI/Grok, OpenAI, Ollama).
 
-## 🛠 Getting Started
+## 🛠 System Requirements
 
-### Prerequisites
-- Node.js 18.17 or later
-- npm or yarn
-- Git
+- **Node.js**: Version 18.17 or higher (LTS recommended)
+- **Package Manager**: npm (v9+) or yarn
+- **RAM**: Minimum 1GB free (2GB+ recommended for building)
+- **Disk Space**: ~500MB
 
-### Installation
+## 🚀 Deployment & Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/lord3nd3r/AI-RPG.git
-   cd ai-rpg
-   ```
+Follow these steps to deploy the AI RPG on a new server (Ubuntu/Linux recommended).
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 1. Preparation
+Ensure your server has Node.js installed.
+```bash
+# Check node version
+node -v
+# Should be v18.17.0 or higher
+```
 
-3. **Configure Environment**
-   Create a `.env` file in the root directory:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Update it with your secrets:
-   ```env
-   # Database
-   DATABASE_URL="file:./dev.db"
+### 2. Installation
 
-   # Auth
-   NEXTAUTH_URL="http://localhost:3000"
-   NEXTAUTH_SECRET="your-super-secret-key-here"
+Clone the repository and install dependencies:
+```bash
+git clone https://github.com/lord3nd3r/AI-RPG.git
+cd ai-rpg
+npm install
+```
 
-   # AI Providers (At least one required)
-   XAI_API_KEY="your-grok-api-key"
-   OPENAI_API_KEY="your-openai-api-key"
-   ```
+### 3. Configuration
 
-4. **Initialize Database**
-   Push the schema to your local SQLite database:
-   ```bash
-   npx prisma migrate dev
-   ```
+Create your production environment configuration:
+```bash
+cp .env.example .env
+nano .env
+```
 
-5. **Run the Development Server**
+**Required Environment Variables:**
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | Connection string for database | `"file:./dev.db"` (SQLite) or Postgres URL |
+| `NEXTAUTH_URL` | The canonical URL of your site | `http://your-server-ip:3000` or `https://example.com` |
+| `NEXTAUTH_SECRET` | Random string for session encryption | Run `openssl rand -base64 32` to generate |
+| `GROK_API_KEY` | xAI API Key (Recommended) | `xai-...` |
+| `OPENAI_API_KEY` | OpenAI API Key (Optional) | `sk-...` |
+
+### 4. Database Setup
+
+Initialize the database schema:
+```bash
+# For SQLite (easiest for small servers):
+npx prisma migrate deploy
+
+# For Production Postgres/MySQL (Update DATABASE_URL first):
+# npx prisma migrate deploy
+```
+
+### 5. Build for Production
+
+Compile the application. This optimizes assets and ensures code validity.
+```bash
+npm run build
+```
+
+### 6. Run the Server
+
+**Option A: Simple Start (Testing)**
+```bash
+npm start
+# App checks for port 3000 by default.
+```
+
+**Option B: Using PM2 (Recommended for 24/7 Uptime)**
+Install PM2 globally to manage the process:
+```bash
+npm install -g pm2
+pm2 start npm --name "ai-rpg" -- start
+pm2 save
+pm2 startup
+```
+
+## 🔧 Troubleshooting
+
+- **Port Conflicts**: If port 3000 is in use, Next.js typically tries 3001+. You can force a port:
+  ```bash
+  PORT=4000 npm start
+  ```
+- **Database Locks**: If using SQLite, ensure the process has write permissions to `dev.db` and the `prisma` folder.
+- **Build Errors**: Clear cache if builds fail:
+  ```bash
+  rm -rf .next
+  npm run build
+  ```
+
+## 🛠 Local Development (Getting Started)
+
+If you just want to contribute code:
+
+1. **Clone & Install**: `git clone ... && npm install`
+2. **Setup Env**: Copy `.env.example` to `.env`
+3. **Run Dev Server**:
    ```bash
    npm run dev
    ```
-
-   Visit [http://localhost:3000](http://localhost:3000) to enter the realm.
-
-   > **Pro Tip**: To test Multiplayer with friends on the same network:
    > 1. Find your local IP (e.g., `192.168.1.X`).
    > 2. Have friends visit `http://YOUR_LOCAL_IP:3000`.
    > 3. Note: Without HTTPS, the "Invite Link" button may use a fallback prompt instead of the clipboard.
