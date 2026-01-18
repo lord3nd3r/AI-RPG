@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  /* Default (Light) */
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #4f46e5; /* indigo-600 */
+  --primary-foreground: #ffffff;
+  --secondary: #e0e7ff; /* indigo-100 */
+  --secondary-foreground: #3730a3; /* indigo-900 */
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --muted: #f9fafb; /* gray-50 */
+  --muted-foreground: #6b7280; /* gray-500 */
+}
+
+[data-theme='dark'] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --primary: #6366f1; /* indigo-500 */
+  --primary-foreground: #ffffff;
+  --secondary: #312e81; /* indigo-900 */
+  --secondary-foreground: #e0e7ff; /* indigo-100 */
+  --card: #171717;
+  --card-foreground: #ededed;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+}
+
+[data-theme='cyberpunk'] {
+  --background: #09090b;
+  --foreground: #00ff41;
+  --primary: #f0f;
+  --primary-foreground: #000000;
+  --secondary: #003300;
+  --secondary-foreground: #00ff41;
+  --card: #111113;
+  --card-foreground: #00ff41;
+  --muted: #000000;
+  --muted-foreground: #008f11;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+[data-theme='fantasy'] {
+  --background: #f4e4bc;
+  --foreground: #433422;
+  --primary: #8b4513;
+  --primary-foreground: #f4e4bc;
+  --secondary: #cbb284;
+  --secondary-foreground: #433422;
+  --card: #e6d2aa;
+  --card-foreground: #433422;
+  --muted: #dbc18d;
+  --muted-foreground: #5c4033;
+  font-family: 'Georgia', serif;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+

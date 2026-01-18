@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getServerSession(authOptions)
+
+  if (!session || !session.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { id } = await params
+
+  try {
+    const { characterId } = await request.json()
+
+    if (!characterId) {
+      return NextResponse.json({ error: 'Missing characterId' }, { status: 400 })
+    }
+
+    // Check if game belongs to user
+    const game = await prisma.game.findUnique({
+      where: { id, dmUserId: session.user.id },
+    })
+
+    if (!game) {
+      return NextResponse.json({ error: 'Game not found' }, { status: 404 })
+    }
+
+    // Check if character belongs to user
+    const character = await prisma.character.findUnique({
+      where: { id: characterId, userId: session.user.id },
+    })
+
+    if (!character) {
+      return NextResponse.json({ error: 'Character not found' }, { status: 404 })
+    }
+
+    const gameCharacter = await prisma.gameCharacter.create({
+      data: {
+        gameId: id,
+        characterId,
+      },
+    })
+
+    return NextResponse.json(gameCharacter)
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

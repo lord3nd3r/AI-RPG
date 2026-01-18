@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  characters Character[]
+  games     Game[]
+  createdAt DateTime @default(now())
+}
+
+model Character {
+  id        String   @id @default(cuid())
+  name      String
+  class     String   @default("Warrior")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stats     String  // Store stats as JSON string, e.g., '{"strength": 10, "intelligence": 8, ...}'
+  games     GameCharacter[]
+  createdAt DateTime @default(now())
+}
+
+model Game {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  dmUserId    String
+  dmUser      User     @relation(fields: [dmUserId], references: [id])
+  aiProvider  String   // e.g., "grok", "chatgpt", "ollama"
+  isPublic    Boolean  @default(false)
+  maxPlayers  Int      @default(4)
+  status      String   @default("active") // active, full, completed
+  characters  GameCharacter[]
+  messages    Message[]
+  createdAt   DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  role      String   // 'user', 'assistant', 'system'
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model GameCharacter {
+  gameId      String
+  characterId String
+  currentHp   Int      @default(10)
+  maxHp       Int      @default(10)
+  exp         Int      @default(0)
+  level       Int      @default(1)
+  statusEffects String @default("[]") // JSON array of strings
+  inventory   String   @default("[]") // JSON list of items
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, characterId])
+}
