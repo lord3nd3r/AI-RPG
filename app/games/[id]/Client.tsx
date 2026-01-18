@@ -17,6 +17,8 @@ interface Character {
   stats: string
   currentHp?: number
   maxHp?: number
+  currentMp?: number
+  maxMp?: number
   level?: number
   exp?: number
   statusEffects?: string
@@ -32,6 +34,8 @@ interface GameResponse {
     character: Character
     currentHp?: number
     maxHp?: number
+    currentMp?: number
+    maxMp?: number
     level?: number
     exp?: number
     statusEffects?: string
@@ -76,7 +80,16 @@ export default function GameClient({ id }: { id: string }) {
       const data: GameResponse = await res.json()
       setGame(data)
       setMessages(data.messages || [])
-      setCharacters((data.characters || []).map((c) => ({ ...c.character, currentHp: c.currentHp, maxHp: c.maxHp, level: c.level, exp: c.exp, statusEffects: c.statusEffects })))
+      setCharacters((data.characters || []).map((c) => ({
+        ...c.character,
+        currentHp: c.currentHp,
+        maxHp: c.maxHp,
+        currentMp: c.currentMp,
+        maxMp: c.maxMp,
+        level: c.level,
+        exp: c.exp,
+        statusEffects: c.statusEffects
+      })))
       setErrorMessage(null)
     } catch (err) {
       console.error(err)
@@ -174,90 +187,184 @@ export default function GameClient({ id }: { id: string }) {
   if (!game) return <div className="p-8 text-center">Loading realm...</div>
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-background">
-      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full border-r border-muted">
-        <div className="p-6 border-b border-muted bg-card shadow-sm z-10 rpg-banner flex items-center gap-4">
-          <div className="w-40 h-16 relative">
-            <Image src="/icons/parchment.svg" alt="parchment" fill sizes="160px" style={{ objectFit: 'cover', borderRadius: 8 }} />
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-               <h1 className="text-2xl font-extrabold text-foreground">{game.name}</h1>
-               <button onClick={copyInvite} className="bg-primary/10 hover:bg-primary/20 text-primary text-xs px-2 py-1 rounded border border-primary/30 transition-colors" title="Copy Invite Link">
-                 ✉️ Invite
+    <div className="flex h-[calc(100vh-64px)] bg-slate-950 overflow-hidden">
+      {/* Main Game Area */}
+      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full border-r border-slate-800 shadow-[20px_0_50px_rgba(0,0,0,0.5)] relative">
+        {/* Header Ribbon */}
+        <div className="p-4 border-b border-white/5 bg-slate-900/80 backdrop-blur-md z-20 flex items-center gap-6 shadow-2xl relative overflow-hidden">
+           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+           <div className="relative group cursor-pointer">
+                <div className="absolute -inset-2 bg-amber-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <Image src="/icons/parchment.svg" alt="parchment" width={60} height={60} className="relative drop-shadow-md transform group-hover:scale-105 transition-transform" />
+           </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-1">
+               <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-200 font-serif tracking-wide drop-shadow-sm">{game.name}</h1>
+               <button onClick={copyInvite} className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-xs px-3 py-1 rounded-full border border-indigo-500/30 transition-all hover:scale-105 flex items-center gap-2" title="Copy Invite Link">
+                 <span>🔗</span> Invoke Ally
                </button>
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{game.description}</p>
+            <p className="text-sm text-slate-400 line-clamp-1 italic border-l-2 border-slate-700 pl-3">{game.description || "A tale untold..."}</p>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background/50">
+        {/* Chat Scrolling Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-950 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start fade-in'}`}>
-              <div className={`max-w-[80%] rounded-lg px-4 py-3 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card chat-assistant text-card-foreground border border-muted rounded-bl-none'}`}>
-                {msg.role === 'assistant' && <div className="text-xs font-bold text-primary mb-1 uppercase tracking-wider">Dungeon Master</div>}
-                <div className="whitespace-pre-wrap">{msg.content}</div>
-                <div className="text-[10px] opacity-70 mt-1 text-right">{new Date(msg.createdAt).toLocaleTimeString()}</div>
+              <div className={`
+                relative max-w-[85%] rounded-2xl px-6 py-4 shadow-lg backdrop-blur-sm border
+                ${msg.role === 'user' 
+                    ? 'bg-gradient-to-br from-indigo-900/80 to-indigo-950/80 text-indigo-100 border-indigo-500/30 rounded-br-none' 
+                    : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 text-slate-300 border-slate-700/50 rounded-bl-none shadow-[0_0_15px_rgba(0,0,0,0.3)]'}
+              `}>
+                {msg.role === 'assistant' && (
+                    <div className="absolute -top-3 -left-2 bg-slate-950 border border-amber-900/50 text-amber-500 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold shadow-sm flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Dungeon Master
+                    </div>
+                )}
+                <div className="whitespace-pre-wrap leading-relaxed font-sans">{msg.content}</div>
+                <div className="text-[10px] opacity-40 mt-2 text-right font-mono tracking-tighter">{new Date(msg.createdAt).toLocaleTimeString()}</div>
               </div>
             </div>
           ))}
-          {loading && <div className="flex justify-start"><div className="bg-muted text-muted-foreground rounded-lg px-4 py-2 text-sm italic animate-pulse">The DM is thinking...</div></div>}
+          {loading && (
+             <div className="flex justify-start">
+                 <div className="bg-slate-900/50 border border-slate-800 text-slate-400 rounded-xl px-4 py-2 text-sm italic animate-pulse flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></span>
+                    The DM is weaving the fate...
+                 </div>
+             </div>
+           )}
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 bg-card border-t border-muted">
-          <form onSubmit={sendMessage} className="flex gap-2">
-            <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="What do you want to do?" className="flex-1 bg-background text-foreground border border-muted rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary" disabled={loading} autoFocus />
-            <button type="submit" disabled={loading} className="bg-primary text-primary-foreground px-6 py-2 rounded-md font-medium hover:brightness-90 transition-all disabled:opacity-50">Send</button>
+        {/* Input Area */}
+        <div className="p-4 bg-slate-900/80 border-t border-white/5 backdrop-blur-md relative z-20">
+          <form onSubmit={sendMessage} className="flex gap-3 relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-indigo-500/5 to-transparent pointer-events-none"></div>
+            <input 
+                type="text" 
+                value={input} 
+                onChange={(e) => setInput(e.target.value)} 
+                placeholder="Declare your action..." 
+                className="flex-1 bg-slate-950/50 text-slate-100 border border-slate-700 rounded-xl px-5 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder-slate-600 shadow-inner" 
+                disabled={loading} 
+                autoFocus 
+            />
+            <button 
+                type="submit" 
+                disabled={loading} 
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-8 py-3 rounded-xl font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 bg-size-200 bg-pos-0 hover:bg-pos-100"
+            >
+                Act
+            </button>
           </form>
         </div>
       </div>
 
-      <div className="w-80 bg-muted/30 border-l border-muted hidden lg:flex flex-col h-full">
-        <div className="p-4 overflow-y-auto max-h-[50%] border-b border-muted">
-            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wider">Party Status</h2>
-            <div className="space-y-4">
+      {/* Sidebar - Party Status & Chat */}
+      <div className="w-80 bg-slate-900 border-l border-slate-800 hidden lg:flex flex-col h-full shadow-2xl z-20 relative">
+         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
+
+         {/* Party Stats */}
+        <div className="p-4 overflow-y-auto max-h-[55%] border-b border-slate-800 scrollbar-thin scrollbar-thumb-slate-700">
+            <h2 className="text-xs font-bold text-slate-500 mb-4 uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="text-xl">🛡️</span> Party Status
+            </h2>
+            <div className="space-y-3">
             {characters.map((char) => (
-                <div key={char.id} className="bg-card p-4 rounded-lg shadow-sm border border-muted">
-                <div className="flex justify-between items-start mb-2">
-                    <div>
-                    <h3 className="font-bold text-foreground">{char.name}</h3>
-                    <p className="text-xs text-muted-foreground">{char.class} - Lvl {char.level || 1}</p>
+                <div key={char.id} className="bg-slate-800/40 p-4 rounded-xl border border-white/5 shadow-lg backdrop-blur-sm group hover:bg-slate-800/60 transition-colors">
+                    <div className="flex justify-between items-start mb-3">
+                        <div>
+                        <h3 className="font-bold text-slate-200 text-sm group-hover:text-indigo-300 transition-colors">{char.name}</h3>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">{char.class} • Lvl {char.level || 1}</p>
+                        </div>
+                        <div className="text-right">
+                         <div className="text-[10px] text-slate-400 font-mono">XP: {char.exp ?? 0}</div>
+                        </div>
                     </div>
-                    <div className="text-right">
-                    <div className={`text-sm font-bold ${char.currentHp && char.maxHp ? (char.currentHp < (char.maxHp/4) ? 'text-red-500' : char.currentHp < (char.maxHp/2) ? 'text-orange-500' : 'text-green-500') : 'text-muted-foreground'}`}>HP {char.currentHp ?? '-'} / {char.maxHp ?? '-'}</div>
-                    <div className="text-[10px] text-muted-foreground">XP: {char.exp ?? 0}</div>
+
+                    {/* HP Bar */}
+                    <div className="mb-2">
+                         <div className="flex justify-between text-[10px] mb-1 font-bold">
+                             <span className="text-red-400">HP</span>
+                             <span className="text-slate-400">{char.currentHp ?? '-'} / {char.maxHp ?? '-'}</span>
+                         </div>
+                        <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden shadow-inner border border-white/5">
+                            <div 
+                                className={`h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden ${
+                                    (char.currentHp && char.maxHp && char.currentHp < char.maxHp * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-gradient-to-r from-red-600 to-red-500'
+                                }`} 
+                                style={{ width: `${char.currentHp && char.maxHp ? Math.max(0, Math.min(100, (char.currentHp/char.maxHp)*100)) : 0}%` }} 
+                            >
+                                <div className="absolute inset-0 bg-white/20"></div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div className="w-full bg-muted rounded-full h-2 mb-3">
-                    <div className="bg-red-500 h-2 rounded-full transition-all duration-500" style={{ width: `${char.currentHp && char.maxHp ? Math.max(0, Math.min(100, (char.currentHp/char.maxHp)*100)) : 0}%` }} />
-                </div>
+                    {/* MP Bar */}
+                    <div className="mb-3">
+                         <div className="flex justify-between text-[10px] mb-1 font-bold">
+                             <span className="text-blue-400">MP</span>
+                             <span className="text-slate-400">{char.currentMp ?? '-'} / {char.maxMp ?? '-'}</span>
+                         </div>
+                        <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden shadow-inner border border-white/5">
+                            <div 
+                                className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full transition-all duration-700 ease-out relative" 
+                                style={{ width: `${char.currentMp && char.maxMp ? Math.max(0, Math.min(100, (char.currentMp/char.maxMp)*100)) : 0}%` }} 
+                            >
+                                <div className="absolute top-0 right-0 bottom-0 w-[1px] bg-white/50 shadow-[0_0_5px_white]"></div>
+                            </div>
+                        </div>
+                    </div>
 
-                <div className="text-xs text-muted-foreground">{(() => { try { const arr = JSON.parse(char.statusEffects || '[]'); return Array.isArray(arr) && arr.length ? arr.join(', ') : 'No effects' } catch { return 'No effects' } })()}</div>
+                    {/* Status Effects */}
+                    <div className="text-[10px] text-slate-500 flex flex-wrap gap-1">
+                        {(() => { 
+                            try { 
+                                const arr = JSON.parse(char.statusEffects || '[]'); 
+                                return Array.isArray(arr) && arr.length 
+                                    ? arr.map((eff: string, i: number) => (
+                                        <span key={i} className="bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700/50">{eff}</span>
+                                      ))
+                                    : <span className="opacity-50 italic">Normal state</span>
+                            } catch { return <span className="opacity-50 italic">Normal state</span> } 
+                        })()}
+                    </div>
                 </div>
             ))}
             </div>
         </div>
         
-        <div className="flex-1 flex flex-col min-h-0 bg-background/50">
-            <div className="p-3 border-b border-muted bg-muted/20">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Party Chat</h2>
+        {/* Party Chat */}
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-950/30">
+            <div className="p-3 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Party Chat
+                </h2>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                {partyMessages.length === 0 && <div className="text-xs text-muted-foreground text-center italic mt-4">No chatter yet...</div>}
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin scrollbar-thumb-slate-800">
+                {partyMessages.length === 0 && (
+                    <div className="text-xs text-slate-600 text-center italic mt-10">
+                        <div className="text-2xl mb-2 opacity-20">💬</div>
+                        No party chatter yet...
+                    </div>
+                )}
                 {partyMessages.map(pm => (
-                    <div key={pm.id} className="text-sm">
-                        <span className="font-bold text-primary mr-1">{pm.character.name}:</span>
-                        <span className="text-foreground">{pm.content}</span>
+                    <div key={pm.id} className="text-xs bg-slate-800/30 p-2 rounded-lg border border-slate-800">
+                        <span className="font-bold text-indigo-400 block mb-1">{pm.character.name}</span>
+                        <span className="text-slate-300 leading-relaxed">{pm.content}</span>
                     </div>
                 ))}
                 <div ref={chatEndRef} />
             </div>
-            <form onSubmit={sendPartyMessage} className="p-3 border-t border-muted bg-card">
+            <form onSubmit={sendPartyMessage} className="p-3 border-t border-slate-800 bg-slate-900 relative z-10">
                 <input 
-                    className="w-full bg-muted/50 border border-muted rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-primary outline-none"
-                    placeholder="Chat as your character..."
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-200 placeholder-slate-600 transition-all"
+                    placeholder="Whisper to party..."
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
                 />

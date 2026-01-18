@@ -88,6 +88,8 @@ model GameCharacter {
   characterId String
   currentHp   Int      @default(10)
   maxHp       Int      @default(10)
+  currentMp   Int      @default(10)
+  maxMp       Int      @default(10)
   exp         Int      @default(0)
   level       Int      @default(1)
   statusEffects String @default("[]") // JSON array of strings

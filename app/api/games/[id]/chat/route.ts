@@ -56,6 +56,7 @@ export async function POST(
   const charactersContext = game.characters.map(gc => `
     Name: ${gc.character.name} (${gc.character.class})
     HP: ${gc.currentHp}/${gc.maxHp}
+    MP: ${gc.currentMp}/${gc.maxMp}
     Stats: ${gc.character.stats}
     Condition: ${JSON.stringify(gc.statusEffects)}
   `).join('\n')
@@ -72,11 +73,11 @@ ${charactersContext}
 
 Your goal is to narrate the adventure, ask for skill checks, and manage combat.
 IMPORTANT: You have the power to update character stats.
-If a character takes damage, heals, gains xp, or gets a status effect, you MUST include a JSON block at the end of your response like this:
+If a character takes damage, heals, uses mana, gains xp, or gets a status effect, you MUST include a JSON block at the end of your response like this:
 \`\`\`json
 {
   "updates": [
-    { "characterName": "Sorian", "hpChange": -5 }, 
+    { "characterName": "Sorian", "hpChange": -5, "mpChange": -2 }, 
     { "characterName": "Sorian", "statusEffect": "Poisoned", "action": "add" }
   ]
 }
@@ -144,6 +145,10 @@ DM:`
             const dbUpdates: Record<string, unknown> = {}
             if (typeof update.hpChange === 'number') {
               dbUpdates.currentHp = { increment: update.hpChange }
+            }
+
+            if (typeof update.mpChange === 'number') {
+              dbUpdates.currentMp = { increment: update.mpChange }
             }
 
             if (update.statusEffect) {
