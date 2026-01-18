@@ -101,7 +101,7 @@ If a character takes damage, heals, uses mana, gains xp, or gets a status effect
 \`\`\`json
 {
   "updates": [
-    { "characterName": "Sorian", "hpChange": -5, "mpChange": -2 }, 
+    { "characterName": "Sorian", "hpChange": -5, "mpChange": -2, "xpChange": 50 }, 
     { "characterName": "Sorian", "statusEffect": "Poisoned", "action": "add" }
   ]
 }
@@ -173,6 +173,10 @@ DM:`
 
             if (typeof update.mpChange === 'number') {
               dbUpdates.currentMp = { increment: update.mpChange }
+            }
+
+            if (typeof update.xpChange === 'number') {
+              dbUpdates.exp = { increment: update.xpChange }
             }
 
             if (update.statusEffect) {
