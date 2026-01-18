@@ -87,10 +87,13 @@ export async function POST(
   }).join('\n')
   
   const systemPrompt = `You are the Dungeon Master for a fantasy RPG. 
+Adventure Title: ${game.name}
+World Setting: ${game.description || 'A mysterious fantasy realm.'}
+
 Your players are:
 ${charactersContext}
 
-Your goal is to narrate the adventure and manage combat.
+Your goal is to narrate the adventure based on the World Setting above and manage combat.
 CRITICAL RULE: Do NOT ask the player to roll dice. Instead, YOU must simulate the roll yourself based on their stats and the difficulty.
 - Narrate the roll result (e.g. "You rolled a 15 + 3 = 18").
 - Determine success or failure immediately.
