@@ -298,7 +298,14 @@ DM:`
         }
 
         // Remove the JSON block from the visible message for immersion
-        aiResponseContent = aiResponseContent.replace(/```json\s*[\s\S]*?\s*```/, '').trim()
+        const codeBlockRegex = /```json\s*[\s\S]*?\s*```/
+        if (codeBlockRegex.test(aiResponseContent)) {
+          aiResponseContent = aiResponseContent.replace(codeBlockRegex, '').trim()
+        } else if (jsonString && aiResponseContent.includes(jsonString)) {
+          aiResponseContent = aiResponseContent.replace(jsonString, '').trim()
+          // Cleanup stray "JSON" labels at the end
+          aiResponseContent = aiResponseContent.replace(/\b(JSON|json)\s*$/g, '').trim()
+        }
       } catch (e) {
         console.error('Failed to parse DM updates', e, '\nRaw DM output:', aiResponseContent)
         // Notify players (and devs) that the DM's update couldn't be parsed
