@@ -12,7 +12,7 @@ const prismaClientSingleton = () => {
     console.log(`Initializing PrismaClient with URL: ${dbUrl}`);
     
     return new PrismaClient({
-        log: ['query', 'error', 'warn'],
+        log: ['error', 'warn'],
         datasources: {
             db: {
                 url: dbUrl
